@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Heart, MessageCircle, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Trash2, Pencil } from 'lucide-react';
 import {
   DropdownMenu, 
   DropdownMenuContent, 
@@ -15,6 +15,7 @@ import { Comment } from '@/types/comment';
 import { commentApi } from '@/api/comment';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'react-toastify';
+import EditPostModal from '../PostModal/EditPostModal';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -28,13 +29,15 @@ interface PostCardProps {
   currentUserId?: string;
   onLike: (postId: string) => void;
   onDelete: (postId: string) => void;
+  onUpdate?: (postId: string, data: { content: string }) => Promise<any>;
 }
 
 export default function PostCard({ 
   post, 
   currentUserId, 
   onLike, 
-  onDelete 
+  onDelete,
+  onUpdate
 }: PostCardProps) {
   const [showAllImages, setShowAllImages] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -42,9 +45,11 @@ export default function PostCard({
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   
   const isLiked = currentUserId ? post.likes.includes(currentUserId) : false;
+  const isAuthor = currentUserId && String(post.user._id) === String(currentUserId);
   
   // Временно показываем кнопку ВСЕМ для тестирования
   const canDelete = true; // currentUserId && (String(post.user._id) === String(currentUserId)); 
@@ -89,6 +94,18 @@ export default function PostCard({
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await commentApi.deleteComment(commentId);
+      setComments(prev => prev.filter(c => c._id !== commentId));
+      toast.success('Коментар видалено!');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Помилка при видаленні коментаря';
+      toast.error(msg);
+      console.error('Delete comment error:', err);
+    }
+  };
+
   useEffect(() => {
     if (showComments && textareaRef.current) {
       // small timeout to ensure element is visible before focusing
@@ -122,6 +139,12 @@ export default function PostCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
+            {isAuthor && onUpdate && (
+              <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Редагувати
+              </DropdownMenuItem>
+            )}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -157,18 +180,24 @@ export default function PostCard({
         {post.imageUrls && post.imageUrls.length > 0 && (
           <div className="mb-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {displayImages.map((imageUrl, index) => (
-                <img
-                  key={index}
-                  src={imageUrl}
-                  alt={`Post image ${index + 1}`}
-                  className="w-full h-48 object-cover rounded"
-                  onError={(e) => {
-                    console.error('Image loading error:', imageUrl);
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              ))}
+              {displayImages.map((imageUrl, index) => {
+                console.log(`🖼️ Відображення зображення ${index + 1}:`, imageUrl);
+                return (
+                  <img
+                    key={index}
+                    src={imageUrl}
+                    alt={`Post image ${index + 1}`}
+                    className="w-full h-48 object-cover rounded"
+                    onError={(e) => {
+                      console.error('❌ Помилка завантаження зображення:', imageUrl);
+                      e.currentTarget.style.display = 'none';
+                    }}
+                    onLoad={() => {
+                      console.log('✅ Зображення завантажено:', imageUrl);
+                    }}
+                  />
+                );
+              })}
             </div>
             
             {post.imageUrls.length > 3 && !showAllImages && (
@@ -220,17 +249,27 @@ export default function PostCard({
                   <p className="text-sm text-muted-foreground">Ще немає коментарів</p>
                 ) : (
                   comments.map((c) => (
-                    <div key={c._id} className="flex items-start gap-3">
+                    <div key={c._id} className="flex items-start gap-3 group">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={c.user?.avatarUrl} />
                         <AvatarFallback>
                           {c.user?.firstName?.[0]}{c.user?.lastName?.[0]}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
+                      <div className="flex-1">
                         <p className="text-sm font-medium">{c.user.firstName} {c.user.lastName}</p>
                         <p className="text-sm text-muted-foreground">{c.content}</p>
                       </div>
+                      {currentUserId === c.user._id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteComment(c._id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
                     </div>
                   ))
                 )}
@@ -263,6 +302,15 @@ export default function PostCard({
             )}
           </div>
         </CardContent>
+      )}
+      
+      {onUpdate && (
+        <EditPostModal 
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          post={post}
+          onUpdate={onUpdate}
+        />
       )}
     </Card>
   );

@@ -29,18 +29,21 @@ export default function CreatePostModal({ onPostCreated }: CreatePostModalProps)
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(event.target.files || []);
+        
+        console.log(`📸 Обрано файлів: ${files.length}`);
 
         if (images.length + files.length > 5) {
-            toast.error('Maximum 5 images allowed');
+            toast.error('Максимум 5 зображень');
             return;
         }
 
         // Check file size
-        const maxSize = 5 * 1024 * 1024; // 5MB
+        const maxSize = 10 * 1024 * 1024; // 10MB (было 5MB)
         const invalidFiles = files.filter(file => file.size > maxSize);
 
         if (invalidFiles.length > 0) {
-            toast.error('File size should not exceed 5MB');
+            toast.error('Розмір файлу не повинен перевищувати 5MB');
+            console.error('Некорректні файли:', invalidFiles.map(f => ({name: f.name, size: f.size})));
             return;
         }
 
@@ -54,6 +57,8 @@ export default function CreatePostModal({ onPostCreated }: CreatePostModalProps)
             };
             reader.readAsDataURL(file);
         });
+        
+        console.log('✅ Зображення додано:', files.map(f => f.name));
     };
 
     const removeImage = (index: number) => {
@@ -65,33 +70,34 @@ export default function CreatePostModal({ onPostCreated }: CreatePostModalProps)
         e.preventDefault();
 
         if (!content.trim()) {
-            toast.error('Post content cannot be empty');
+            toast.error('Вміст посту не може бути порожнім');
             return;
         }
 
-        console.log('🚀 Submitting post:', {
+        console.log('🚀 Відправка посту:', {
             content: content.trim(),
-            imagesCount: images.length,
+            imageCount: images.length,
             images: images.map(img => ({ name: img.name, size: img.size }))
         });
 
         setIsLoading(true);
 
         try {
-            // Отправляем пост напрямую в ваш API - он сам обработает изображения
+            // Send post with images
             const result = await postApi.createPost({
                 content: content.trim(),
-                images // Ваш бэкенд уже умеет обрабатывать File[]
+                images
             });
 
-            console.log('✅ Post created successfully:', result);
+            console.log('✅ Пост успішно створено:', result);
             toast.success('Пост успішно створено!');
             setIsOpen(false);
             resetForm();
             onPostCreated?.();
-        } catch (error) {
-            console.error('❌ Error creating post:', error);
-            toast.error('Помилка створення посту');
+        } catch (error: any) {
+            console.error('❌ Помилка створення посту:', error);
+            const errorMsg = error.response?.data?.message || error.message || 'Помилка створення посту';
+            toast.error(errorMsg);
         } finally {
             setIsLoading(false);
         }

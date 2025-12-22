@@ -6,13 +6,26 @@ const _ = require("lodash");
 // controllers/post.js
 exports.createPost = async (req, res) => {
   try {
-    // Получаем загруженные файлы из S3
+    console.log("📥 Прийшли файли:", req.files);
+    console.log("📥 Body:", req.body);
+    console.log("📥 User:", req.user);
+    
+    // Получаем загруженные файлы (локальные или S3)
     const files = req.files;
-    const imageUrls = files ? files.map((file) => file.location) : [];
+    let imageUrls = [];
+    
+    if (files && files.length > 0) {
+      imageUrls = files.map((file) => {
+        // Для локальных файлов используем path, для S3 используем location
+        const imagePath = file.location || `/uploads/${file.filename}`;
+        console.log(`📸 Файл: ${file.originalname} -> ${imagePath}`);
+        return imagePath;
+      });
+    }
 
-    console.log("Загруженные изображения:", imageUrls);
-    console.log("Контент:", req.body.content);
-    console.log("Пользователь:", req.user);
+    console.log("✅ Загруженные изображения:", imageUrls);
+    console.log("✅ Контент:", req.body.content);
+    console.log("✅ Пользователь:", req.user);
 
     // Создаем пост с правильными полями согласно модели
     const postData = {
@@ -24,6 +37,8 @@ exports.createPost = async (req, res) => {
       date: new Date() // поле date (не createdAt)
     };
 
+    console.log("💾 Сохраняем постData:", postData);
+
     // Сохраняем в MongoDB
     const newPost = new Post(postData);
     await newPost.save();
@@ -32,13 +47,15 @@ exports.createPost = async (req, res) => {
     const populatedPost = await Post.findById(newPost._id)
       .populate("user", "firstName lastName email avatarUrl");
 
+    console.log("✅ Пост сохранен в БД:", populatedPost);
+
     res.status(201).json({
       message: "Пост создан успешно",
       post: populatedPost
     });
     
   } catch (error) {
-    console.error("Ошибка создания поста:", error);
+    console.error("❌ Ошибка создания поста:", error);
     res.status(500).json({
       error: "Ошибка при создании поста",
       details: error.message,

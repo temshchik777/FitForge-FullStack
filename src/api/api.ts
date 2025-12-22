@@ -3,9 +3,6 @@ import axios from 'axios';
 // Create axios instance with default config
 export const api = axios.create({
   baseURL: 'http://localhost:4000', // Base URL from existing fetch calls
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Request interceptor
@@ -19,6 +16,22 @@ api.interceptors.request.use(
     // If token exists, add it to the headers
     if (token) {
       config.headers.Authorization = token;
+    }
+
+    // Ensure proper Content-Type depending on payload
+    const isFormData = typeof FormData !== 'undefined' && config.data instanceof FormData;
+    if (isFormData) {
+      // Let the browser/axios set multipart/form-data with boundary automatically
+      if (config.headers) {
+        // Remove any preset content-type that would break FormData
+        delete (config.headers as any)['Content-Type'];
+        delete (config.headers as any)['content-type'];
+      }
+    } else {
+      // Default JSON for non-FormData payloads
+      if (config.headers) {
+        (config.headers as any)['Content-Type'] = 'application/json';
+      }
     }
 
     return config;
@@ -74,12 +87,8 @@ export const apiService = {
 
   // POST request with FormData (for file uploads)
   postFormData: async (url: string, formData: FormData) => {
-    // НЕ устанавливаем Content-Type вручную - пусть браузер сделает это сам
-    const response = await api.post(url, formData, {
-      headers: {
-        // Убираем Content-Type, браузер сам установит multipart/form-data с boundary
-      },
-    });
+    // НЕ устанавливаем Content-Type вручную — пусть браузер выставит boundary сам
+    const response = await api.post(url, formData);
     return response.data;
   },
 

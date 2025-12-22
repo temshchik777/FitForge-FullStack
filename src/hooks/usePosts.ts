@@ -14,7 +14,13 @@ export const usePosts = (filters: PostFilters = {}) => {
     setError(null);
     try {
       const response = await postApi.getPosts(filters);
-      setPosts(response.posts);
+      // Сортируем посты по дате (новые вверху)
+      const sortedPosts = response.posts.sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateB - dateA; // Новые вверху
+      });
+      setPosts(sortedPosts);
       setTotalCount(response.postsQuantity);
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Ошибка при загрузке постов';
@@ -48,7 +54,7 @@ export const usePosts = (filters: PostFilters = {}) => {
     try {
       const updatedPost = await postApi.toggleLike(postId);
       setPosts(prev => prev.map(post => 
-        post._id === postId ? updatedPost : post
+        post._id === postId ? { ...post, ...updatedPost, imageUrls: post.imageUrls } : post
       ));
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Ошибка при изменении лайка';
@@ -57,15 +63,30 @@ export const usePosts = (filters: PostFilters = {}) => {
     }
   };
 
+  const updatePost = async (postId: string, data: { content: string }) => {
+    try {
+      const updatedPost = await postApi.updatePost(postId, data);
+      setPosts(prev => prev.map(post => 
+        post._id === postId ? { ...post, ...updatedPost, imageUrls: post.imageUrls } : post
+      ));
+      toast.success('Пост оновлено');
+      return updatedPost;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Помилка оновлення';
+      toast.error(errorMessage);
+      throw err;
+    }
+  };
+
   const deletePost = async (postId: string) => {
     try {
       await postApi.deletePost(postId);
       setPosts(prev => prev.filter(post => post._id !== postId));
-      toast.success('Пост удален успешно');
+      toast.success('Пост видалено успішно');
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Ошибка при удалении поста';
+      const errorMessage = err.response?.data?.message || 'Помилка при видаленні поста';
       toast.error(errorMessage);
-      console.error('Ошибка удаления поста:', err);
+      console.error('Помилка видалення поста:', err);
     }
   };
 
@@ -80,6 +101,7 @@ export const usePosts = (filters: PostFilters = {}) => {
     totalCount,
     createPost,
     toggleLike,
+    updatePost,
     deletePost,
     refetch: fetchPosts,
   };

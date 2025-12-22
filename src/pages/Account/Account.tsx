@@ -18,7 +18,8 @@ export default function Account() {
         posts, 
         loading: postsLoading, 
         error: postsError,
-        toggleLike, 
+        toggleLike,
+        updatePost,
         deletePost, 
         refetch: refetchPosts 
     } = usePosts();
@@ -205,6 +206,7 @@ export default function Account() {
                                     currentUserId={currentUserId}
                                     onLike={toggleLike}
                                     onDelete={deletePost}
+                                    onUpdate={updatePost}
                                 />
                             ))}
                         </div>

@@ -28,6 +28,10 @@ export const commentApi = {
     }
 
     return response;
+  },
+
+  deleteComment: async (commentId: string) => {
+    return await apiService.delete(Quries.API.COMMENTS.DELETE(commentId));
   }
 };
 

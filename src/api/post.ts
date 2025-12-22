@@ -10,21 +10,42 @@ export const postApi = {
         formData.append('content', data.content);
 
         // Добавляем изображения
-        if (data.images) {
-            data.images.forEach((image) => {
+        if (data.images && data.images.length > 0) {
+            console.log(`📤 Додавання ${data.images.length} зображень до FormData`);
+            data.images.forEach((image, index) => {
+                console.log(`📸 Зображення ${index + 1}: ${image.name} (${image.size} bytes)`);
                 formData.append('images', image);
             });
+        } else {
+            console.log('⚠️ Зображень немає');
         }
 
+        console.log('🚀 Відправка FormData на бэкенд...');
         const response = await apiService.postFormData(Quries.API.POSTS.CREATE, formData);
 
-        if (response.post && response.post.imageUrls) {
-            response.post.imageUrls = response.post.imageUrls.map((url: string) => {
-                if (url.startsWith('/')) {
-                    return `${BASE_URL}${url}`;
-                }
-                return url;
+        console.log('✅ Відповідь від бэкенду:', response);
+        
+        if (response.post) {
+            console.log('📋 Деталі посту:', {
+                _id: response.post._id,
+                content: response.post.content,
+                imageUrls: response.post.imageUrls,
+                imageCount: response.post.imageUrls ? response.post.imageUrls.length : 0
             });
+        }
+        
+        if (response.post && response.post.imageUrls && response.post.imageUrls.length > 0) {
+            response.post.imageUrls = response.post.imageUrls.map((url: string) => {
+                console.log(`🔗 Обработка URL: ${url}`);
+                if (url.startsWith('http://') || url.startsWith('https://')) {
+                    return url; // Уже полный URL
+                } else if (url.startsWith('/')) {
+                    return `${BASE_URL}${url}`;
+                } else {
+                    return `${BASE_URL}/${url}`;
+                }
+            });
+            console.log('✅ Обработанные URLs:', response.post.imageUrls);
         }
 
         return response;

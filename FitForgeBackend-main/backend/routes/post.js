@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const passport = require("passport");
+const { upload } = require("../middleware/uploadMiddleware");
 
 //Import controllers
 const {
@@ -15,7 +16,7 @@ const {
 // @route   POST api/posts
 // @desc    Create post
 // @access  Private
-router.post("/", passport.authenticate("jwt", { session: false }), createPost);
+router.post("/", passport.authenticate("jwt", { session: false }), upload.array('images', 5), createPost);
 
 // @route   PUT api/posts/:id
 // @desc    Update post
