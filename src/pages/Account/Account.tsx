@@ -22,7 +22,7 @@ export default function Account() {
         updatePost,
         deletePost, 
         refetch: refetchPosts 
-    } = usePosts();
+    } = usePosts({ userId: (localStorage.getItem('userId') || undefined) as string | undefined });
 
     // Получаем текущий userId: сначала из localStorage, иначе из payload JWT-товкена (fallback)
     const getUserIdFromToken = (): string | undefined => {

@@ -55,9 +55,10 @@ export const postApi = {
         const params = new URLSearchParams();
 
         Object.entries(filters).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-                params.append(key, String(value));
-            }
+            if (value === undefined || value === null) return;
+            // Бэкенд ожидает поле "user", на фронте используется "userId"
+            const paramKey = key === 'userId' ? 'user' : key;
+            params.append(paramKey, String(value));
         });
 
         const queryString = params.toString();

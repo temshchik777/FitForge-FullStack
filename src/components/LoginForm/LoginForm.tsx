@@ -48,16 +48,27 @@ export function LoginForm({
 
             if (data.token) {
                 localStorage.setItem('token', data.token);
-                
-                // Сохраняем ID пользователя из ответа вашего бэкенда
-                if (data.user && data.user._id) {
-                    localStorage.setItem('userId', data.user._id);
-                    console.log('✅ Saved userId:', data.user._id);
-                } else if (data.userId) {
-                    localStorage.setItem('userId', data.userId);
-                    console.log('✅ Saved userId:', data.userId);
-                } else {
-                    console.warn('⚠️ No userId found in login response');
+
+                // Пытаемся извлечь userId из JWT, если сервер его не вернул явно
+                try {
+                    const bearer = String(data.token);
+                    const rawToken = bearer.startsWith('Bearer ')
+                        ? bearer.slice(7)
+                        : bearer;
+                    const base64Url = rawToken.split('.')[1];
+                    if (base64Url) {
+                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+                        const payloadJson = atob(padded);
+                        const payload = JSON.parse(payloadJson);
+                        const uid = payload?.id || payload?.userId || payload?.sub;
+                        if (uid) {
+                            localStorage.setItem('userId', String(uid));
+                            console.log('✅ Saved userId from JWT:', uid);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Failed to decode JWT payload for userId', e);
                 }
                 
                 toast.success('Вхід успішний!');

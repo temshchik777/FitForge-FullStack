@@ -73,7 +73,7 @@ exports.updatePost = (req, res, next) => {
         });
       }
 
-      if (!(req.user.isAdmin || req.user.id === post.user)) {
+      if (!(req.user.isAdmin || String(req.user.id) === String(post.user))) {
         return res.status(403).json({
           message: `You don't have permission to perform this action.`,
         });
@@ -149,7 +149,7 @@ exports.deletePost = (req, res, next) => {
       });
     }
 
-    if (!(req.user.isAdmin || req.user.id === post.user)) {
+    if (!(req.user.isAdmin || String(req.user.id) === String(post.user))) {
       return res.status(403).json({
         message: `You don't have permission to perform this action.`,
       });

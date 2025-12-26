@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/dialog"
 import { useAuth } from "@/auth/useAuth.ts";
 interface RegisterFormData {
+    firstName: string;
+    lastName: string;
+    login: string;
     email: string;
     password: string;
     confirmPassword: string;
@@ -33,6 +36,9 @@ export function RegisterForm({
     const navigate = useNavigate();
     const { register } = useAuth();
     const [formData, setFormData] = useState<RegisterFormData>({
+        firstName: "",
+        lastName: "",
+        login: "",
         email: "",
         password: "",
         confirmPassword: "",
@@ -50,13 +56,20 @@ export function RegisterForm({
         }
 
         try {
-            await register(formData.email, formData.password);
+            await register(
+                formData.email,
+                formData.password,
+                formData.firstName,
+                formData.lastName,
+                formData.login,
+            );
             setIsSuccess(true);
             setTimeout(() => {
                 navigate(ROUTS.LOGIN);
             }, 2000);
         } catch (err) {
-            setError("Помилка при реєстрації");
+            if (err instanceof Error) setError(err.message);
+            else setError("Помилка при реєстрації");
         }
     };
 
@@ -74,12 +87,48 @@ export function RegisterForm({
                     <CardHeader>
                         <CardTitle>Реєстрація нового облікового запису</CardTitle>
                         <CardDescription>
-                            Введіть електронну пошту та пароль для реєстрації
+                            Заповніть дані для створення облікового запису
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit}>
                             <div className="flex flex-col gap-6">
+                                <div className="grid gap-3">
+                                    <Label htmlFor="firstName">Ім’я</Label>
+                                    <Input
+                                        id="firstName"
+                                        name="firstName"
+                                        type="text"
+                                        placeholder="Іван"
+                                        required
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                                <div className="grid gap-3">
+                                    <Label htmlFor="lastName">Прізвище</Label>
+                                    <Input
+                                        id="lastName"
+                                        name="lastName"
+                                        type="text"
+                                        placeholder="Петренко"
+                                        required
+                                        value={formData.lastName}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                                <div className="grid gap-3">
+                                    <Label htmlFor="login">Логін</Label>
+                                    <Input
+                                        id="login"
+                                        name="login"
+                                        type="text"
+                                        placeholder="ivanpetrenko"
+                                        required
+                                        value={formData.login}
+                                        onChange={handleChange}
+                                    />
+                                </div>
                                 <div className="grid gap-3">
                                     <Label htmlFor="email">Email</Label>
                                     <Input

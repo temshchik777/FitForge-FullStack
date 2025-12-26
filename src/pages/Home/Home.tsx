@@ -1,21 +1,62 @@
-import { useEffect } from "react";
-import axios from "axios";
+import PostCard from "@/components/PostCard/PostCard";
+import CreatePostModal from "@/components/PostModal/CreatePostModal.tsx";
+import { usePosts } from "@/hooks/usePosts";
+
+function getUserIdFromToken(): string | undefined {
+  try {
+    const raw = localStorage.getItem("token");
+    if (!raw) return undefined;
+    const token = raw.startsWith("Bearer ") ? raw.slice(7) : raw;
+    const [, payload] = token.split(".");
+    if (!payload) return undefined;
+    const decoded = JSON.parse(atob(payload));
+    return decoded?.id || decoded?.userId || decoded?.sub;
+  } catch {
+    return undefined;
+  }
+}
 
 export default function Home() {
-  useEffect(() => {
-    axios.get("http://localhost:4000/api/posts")
-      .then(res => console.log("Posts from backend:", res.data))
-      .catch(err => console.error("Error fetching posts:", err.response?.data || err.message));
-  }, []);
+  const {
+    posts,
+    loading,
+    error,
+    toggleLike,
+    updatePost,
+    deletePost,
+    refetch,
+  } = usePosts(); // без фильтров = все пользователи
+
+  const currentUserId = localStorage.getItem("userId") || getUserIdFromToken();
 
   return (
-    <div className="flex flex-1 flex-col gap-4 h-full">
-      <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-        <div className="bg-muted/50 aspect-video rounded-xl" />
-        <div className="bg-muted/50 aspect-video rounded-xl" />
-        <div className="bg-muted/50 aspect-video rounded-xl" />
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Лента</h1>
+        <CreatePostModal onPostCreated={refetch} />
       </div>
-      <div className="bg-muted/50 min-h-[50vh] flex-1 rounded-xl" />
+
+      {loading && <p className="py-6 text-center text-sm text-muted-foreground">Завантаження постів...</p>}
+      {error && <p className="py-6 text-center text-sm text-red-500">Помилка: {error}</p>}
+
+      {!loading && !error && posts.length === 0 && (
+        <p className="py-6 text-center text-sm text-muted-foreground">Поки що постів немає</p>
+      )}
+
+      {!loading && !error && posts.length > 0 && (
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <PostCard
+              key={post._id}
+              post={post}
+              currentUserId={currentUserId}
+              onLike={toggleLike}
+              onDelete={deletePost}
+              onUpdate={updatePost}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
