@@ -16,6 +16,17 @@ const {
   deleteUserFromFollowers,
 } = require("../controllers/users");
 
+// @route   GET /api/users/current
+// @desc    Return current user
+// @access  Private
+router.get(
+  "/current",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    res.json(req.user);
+  },
+);
+
 // @route   POST /api/users
 // @desc    Register user
 // @access  Public

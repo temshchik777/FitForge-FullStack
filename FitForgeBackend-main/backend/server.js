@@ -15,17 +15,21 @@ const cors = require('cors');
 
 const app = express();
 
-// Multer configuration for file uploads
-const uploadRoutes = require('./routes/uploadRoutes');
-app.use('/api/files', uploadRoutes);
-
+// CORS должен быть первым
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174']
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Body parser middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+// Multer configuration for file uploads
+const uploadRoutes = require('./routes/uploadRoutes');
+app.use('/api/files', uploadRoutes);
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

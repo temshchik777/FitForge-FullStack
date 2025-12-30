@@ -3,15 +3,22 @@ const router = express.Router();
 const { upload, deleteFile } = require('../middleware/uploadMiddleware');
 
 // Загрузка файлов
-router.post('/upload', upload.array('files', 5), (req, res) => {
+router.post('/upload', upload.array('images', 5), (req, res) => {
     try {
-        const uploadedFiles = req.files.map(file => ({
-            key: file.key,
-            location: `${process.env.S3_BASE_URL}/${file.key}`,
-            originalName: file.originalname
-        }));
-        res.status(200).json({ success: true, files: uploadedFiles });
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ success: false, error: 'Файлы не загружены' });
+        }
+        
+        // Возвращаем имена файлов (без пути)
+        const fileNames = req.files.map(file => file.filename);
+        
+        res.status(200).json({ 
+            success: true, 
+            files: fileNames,
+            message: 'Файлы успешно загружены'
+        });
     } catch (error) {
+        console.error('Upload error:', error);
         res.status(400).json({ success: false, error: error.message });
     }
 });

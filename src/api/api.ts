@@ -9,13 +9,16 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Get token from localStorage if it exists
-    const token = localStorage.getItem('token');
+    const storedToken = localStorage.getItem('token');
 
-    console.log(token);
+    // Normalize token to always include Bearer prefix (passport-jwt expects it)
+    if (storedToken) {
+      const bearerToken = storedToken.startsWith('Bearer ')
+        ? storedToken
+        : `Bearer ${storedToken}`;
 
-    // If token exists, add it to the headers
-    if (token) {
-      config.headers.Authorization = token;
+      if (!config.headers) config.headers = {} as any;
+      config.headers.Authorization = bearerToken;
     }
 
     // Ensure proper Content-Type depending on payload

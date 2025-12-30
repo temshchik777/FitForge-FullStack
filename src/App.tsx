@@ -7,6 +7,7 @@ import General from "@/pages/Settings/General";
 import Team from "@/pages/Settings/Team";
 import Billing from "@/pages/Settings/Billing";
 import Limits from "@/pages/Settings/Limits";
+import Security from "@/pages/Settings/Security";
 
 
 import {ToastContainer} from "react-toastify";
@@ -34,6 +35,7 @@ export function App() {
                         <Route path={ROUTS.SETTINGS.TEAM} element={<Team/>}/>
                         <Route path={ROUTS.SETTINGS.BILLING} element={<Billing/>}/>
                         <Route path={ROUTS.SETTINGS.LIMITS} element={<Limits/>}/>
+                        <Route path={ROUTS.SETTINGS.SECURITY} element={<Security/>}/>
 
 
                         <Route path={ROUTS.ACCOUNT} element={<Account/>}/>

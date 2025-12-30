@@ -14,5 +14,6 @@ export const ROUTS = {
     TEAM: "/settings/team",
     LIMITS: "/settings/limits",
     BILLING: "/settings/billing",
+    SECURITY: "/settings/security",
   },
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Heart, MessageCircle, MoreHorizontal, Trash2, Pencil } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   DropdownMenu, 
   DropdownMenuContent, 
@@ -39,24 +39,36 @@ export default function PostCard({
   onDelete,
   onUpdate
 }: PostCardProps) {
-  const [showAllImages, setShowAllImages] = useState(false);
+  // const [showAllImages, setShowAllImages] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   
   const isLiked = currentUserId ? post.likes.includes(currentUserId) : false;
   const isAuthor = currentUserId && String(post.user._id) === String(currentUserId);
-  
-  // Временно показываем кнопку ВСЕМ для тестирования
-  const canDelete = true; // currentUserId && (String(post.user._id) === String(currentUserId)); 
-  
+  const canEdit = isAuthor && Boolean(onUpdate);
+  const canDelete = isAuthor;
+  const hasMenu = canEdit || canDelete;
   // debug logging removed
 
-  const displayImages = showAllImages ? post.imageUrls : post.imageUrls.slice(0, 3);
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [post._id, post.imageUrls?.length]);
+
+  const prevImage = () => {
+    const len = post.imageUrls?.length || 1;
+    setCurrentIndex((i) => (i - 1 + len) % len);
+  };
+
+  const nextImage = () => {
+    const len = post.imageUrls?.length || 1;
+    setCurrentIndex((i) => (i + 1) % len);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -131,47 +143,50 @@ export default function PostCard({
           </p>
         </div>
         
-        {/* Показываем кнопку ВСЕМ для тестирования */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {isAuthor && onUpdate && (
-              <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Редагувати
-              </DropdownMenuItem>
-            )}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Видалити пост
+        {hasMenu && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {canEdit && (
+                <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Редагувати
                 </DropdownMenuItem>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Видалити пост?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Цю дію неможна буде скасувати. Пост буде назавжди видалено.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Скасувати</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={() => onDelete(post._id)}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    Видалити
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              )}
+              {canDelete && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Видалити пост
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Видалити пост?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Цю дію неможна буде скасувати. Пост буде назавжди видалено.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Скасувати</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={() => onDelete(post._id)}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Видалити
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </CardHeader>
       
       <CardContent>
@@ -179,36 +194,42 @@ export default function PostCard({
         
         {post.imageUrls && post.imageUrls.length > 0 && (
           <div className="mb-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {displayImages.map((imageUrl, index) => {
-                console.log(`🖼️ Відображення зображення ${index + 1}:`, imageUrl);
-                return (
-                  <img
-                    key={index}
-                    src={imageUrl}
-                    alt={`Post image ${index + 1}`}
-                    className="w-full h-48 object-cover rounded"
-                    onError={(e) => {
-                      console.error('❌ Помилка завантаження зображення:', imageUrl);
-                      e.currentTarget.style.display = 'none';
-                    }}
-                    onLoad={() => {
-                      console.log('✅ Зображення завантажено:', imageUrl);
-                    }}
-                  />
-                );
-              })}
+            <div className="relative flex justify-center">
+              <img
+                src={post.imageUrls[currentIndex]}
+                alt={`Post image ${currentIndex + 1}`}
+                className="w-full max-w-md aspect-square object-cover rounded"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+
+              {post.imageUrls.length > 1 && (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={prevImage}
+                    className="absolute top-1/2 -translate-y-1/2 left-2 rounded-full bg-black/30 text-white hover:bg-black/50"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={nextImage}
+                    className="absolute top-1/2 -translate-y-1/2 right-2 rounded-full bg-black/30 text-white hover:bg-black/50"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </>
+              )}
             </div>
-            
-            {post.imageUrls.length > 3 && !showAllImages && (
-              <Button
-                variant="ghost"
-                onClick={() => setShowAllImages(true)}
-                className="mt-2 text-sm"
-              >
-                Show {post.imageUrls.length - 3} more images
-              </Button>
-            )}
+
+            <div className="mt-2 text-xs text-muted-foreground text-center">
+              {currentIndex + 1} / {post.imageUrls.length}
+            </div>
           </div>
         )}
         
