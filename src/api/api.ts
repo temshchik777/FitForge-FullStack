@@ -5,14 +5,42 @@ export const api = axios.create({
   baseURL: 'http://localhost:4000', // Base URL from existing fetch calls
 });
 
+const LOGIN_PATH = '/login';
+
+// Decode JWT exp and check freshness; be defensive on malformed tokens
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const raw = token.startsWith('Bearer ')
+      ? token.slice(7)
+      : token;
+    const payloadPart = raw.split('.')[1];
+    if (!payloadPart) return true;
+    const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+    const payload = JSON.parse(atob(padded));
+    const expMs = payload?.exp ? payload.exp * 1000 : null;
+    if (!expMs) return false;
+    return Date.now() >= expMs;
+  } catch (e) {
+    console.warn('JWT decode failed', e);
+    return true;
+  }
+};
+
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
     // Get token from localStorage if it exists
     const storedToken = localStorage.getItem('token');
 
+    // Drop expired token early to avoid unnecessary 401
+    if (storedToken && isTokenExpired(storedToken)) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+    }
+
     // Normalize token to always include Bearer prefix (passport-jwt expects it)
-    if (storedToken) {
+    if (storedToken && !isTokenExpired(storedToken)) {
       const bearerToken = storedToken.startsWith('Bearer ')
         ? storedToken
         : `Bearer ${storedToken}`;
@@ -56,12 +84,14 @@ api.interceptors.response.use(
       // that falls out of the range of 2xx
       console.error('API Error:', error.response.data);
 
-      // Handle 401 Unauthorized - redirect to login
-      // if (error.response.status === 401) {
-      //   // Clear token and redirect to login
-      //   localStorage.removeItem('token');
-      //   window.location.href = Quries.CLIENT.AUTH.LOGIN;
-      // }
+      // Handle 401 Unauthorized - cleanup token and redirect to login
+      if (error.response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        if (window.location.pathname !== LOGIN_PATH) {
+          window.location.href = LOGIN_PATH;
+        }
+      }
     } else if (error.request) {
       // The request was made but no response was received
       console.error('Network Error:', error.request);

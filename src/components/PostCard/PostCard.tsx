@@ -93,8 +93,9 @@ export default function PostCard({
     if (!newComment.trim()) return;
     setSubmitting(true);
     try {
-      const created = await commentApi.createComment(post._id, newComment.trim());
-      setComments(prev => [created, ...prev]);
+      await commentApi.createComment(post._id, newComment.trim());
+      const refreshed = await commentApi.getCommentsByPost(post._id); // тянем нормализованные данные
+      setComments(refreshed);
       setNewComment('');
       toast.success('Коментар доданий успішно!');
     } catch (err: any) {
