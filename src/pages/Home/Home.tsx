@@ -2,6 +2,9 @@ import PostCard from "@/components/PostCard/PostCard";
 import CreatePostModal from "@/components/PostModal/CreatePostModal.tsx";
 import { usePosts } from "@/hooks/usePosts";
 import { getIsAdminFromToken } from "@/utils/tokenUtils";
+import { useState, useEffect } from "react";
+import { apiService } from "@/api/api";
+import { Quries } from "@/api/quries";
 
 function getUserIdFromToken(): string | undefined {
   try {
@@ -30,6 +33,28 @@ export default function Home() {
 
   const currentUserId = localStorage.getItem("userId") || getUserIdFromToken();
   const isAdmin = getIsAdminFromToken();
+  const [savedPostIds, setSavedPostIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchSavedPosts = async () => {
+      try {
+        const savedPosts = await apiService.get(Quries.API.USERS.GET_SAVED_POSTS);
+        const ids = savedPosts.map((p: any) => p._id);
+        setSavedPostIds(ids);
+      } catch (error) {
+        console.error("Error fetching saved posts:", error);
+      }
+    };
+    fetchSavedPosts();
+  }, []);
+
+  const handleSaveToggle = (postId: string) => {
+    setSavedPostIds(prev => 
+      prev.includes(postId) 
+        ? prev.filter(id => id !== postId)
+        : [...prev, postId]
+    );
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -47,7 +72,7 @@ export default function Home() {
 
       {!loading && !error && posts.length > 0 && (
         <div className="space-y-4">
-          {posts.map((post) => (
+          {posts.filter(post => post.user).map((post) => (
             <PostCard
               key={post._id}
               post={post}
@@ -56,6 +81,8 @@ export default function Home() {
               onDelete={deletePost}
               onUpdate={updatePost}
               isAdmin={isAdmin}
+              isSaved={savedPostIds.includes(post._id)}
+              onSaveToggle={handleSaveToggle}
             />
           ))}
         </div>

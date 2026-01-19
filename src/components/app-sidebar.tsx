@@ -100,38 +100,35 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: "Збережене",
-        url: "#",
+        url: "/saved",
         icon: BookOpen,
         items: [],
       },
       {
         title: "Редагувати",
-        url: "#",
-        icon: Frame,
-        items: [],
-      },
-      {
         title: "Налаштування",
         url: "#", 
         icon: Settings2,
         items: [
           { title: "Загальні", url: ROUTS.SETTINGS.GENERAL },
-          { title: "Команда", url: ROUTS.SETTINGS.TEAM },
-          { title: "Оплата", url: ROUTS.SETTINGS.BILLING },
-          { title: "Обмеження", url: ROUTS.SETTINGS.LIMITS },
           { title: "Безпека", url: ROUTS.SETTINGS.SECURITY },
+        ],
+      },
+      {
+        title: "Підтримка",
+        url: "#",
+        icon: LifeBuoy,
+        items: [
+          { title: "FAQ", url: ROUTS.SUPPORT.FAQ },
+          { title: "Звіт про проблему", url: ROUTS.SUPPORT.REPORT_BUG },
+          { title: "Про нас", url: ROUTS.SUPPORT.ABOUT },
         ],
       }
     ],
     navSecondary: [
       {
-        title: "Підтримка",
-        url: "#",
-        icon: LifeBuoy,
-      },
-      {
         title: "Надіслати відгук",
-        url: "#",
+        url: ROUTS.SUPPORT.REPORT_BUG,
         icon: Send,
       },
     ],

@@ -47,6 +47,7 @@ const UserSchema = new Schema(
     awards: [{ type: Schema.Types.ObjectId, ref: "Award" }],
     followers: [{ type: Schema.Types.ObjectId, ref: "users" }],
     followedBy: [{ type: Schema.Types.ObjectId, ref: "users" }],
+    savedPosts: [{ type: Schema.Types.ObjectId, ref: "posts" }],
     weightHistory: [{
       weight: Number,
       date: { type: Date, default: Date.now }

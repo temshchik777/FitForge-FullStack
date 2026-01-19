@@ -3,7 +3,6 @@ import { useLogout } from "@/hooks/use-logout";
 
 import {
   BadgeCheck,
-  Bell,
   ChevronsUpDown,
   CreditCard,
   LogOut,
@@ -29,6 +28,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useNavigate } from "react-router";
+import { ROUTS } from "@/routes/routes";
 
 export function NavUser({
   user,
@@ -41,6 +42,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const logout = useLogout();
+  const navigate = useNavigate();
 
   return (
     <SidebarMenu>
@@ -83,18 +85,15 @@ export function NavUser({
 
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Мій облік
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Оплата
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Повідомлення
-              </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    navigate(ROUTS.ACCOUNT);
+                  }}
+                >
+                  <BadgeCheck />
+                  Мій облік
+                </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>

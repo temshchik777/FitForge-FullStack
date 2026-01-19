@@ -16,4 +16,11 @@ export const ROUTS = {
     BILLING: "/settings/billing",
     SECURITY: "/settings/security",
   },
+
+  SUPPORT: {
+    ROOT: "/support",
+    FAQ: "/support/faq",
+    REPORT_BUG: "/support/report-bug",
+    ABOUT: "/support/about",
+  },
 }

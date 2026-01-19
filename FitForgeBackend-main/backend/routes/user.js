@@ -16,6 +16,12 @@ const {
   deleteUserFromFollowers,
 } = require("../controllers/users");
 
+const {
+  savePost,
+  unsavePost,
+  getSavedPosts,
+} = require("../controllers/savedPosts");
+
 // @route   GET /api/users/current
 // @desc    Return current user
 // @access  Private
@@ -49,6 +55,15 @@ router.put(
   "/update-password",
   passport.authenticate("jwt", { session: false }),
   updatePassword,
+);
+
+// @route   GET /api/users/saved
+// @desc    Get all saved posts
+// @access  Private
+router.get(
+  "/saved",
+  passport.authenticate("jwt", { session: false }),
+  getSavedPosts,
 );
 
 // @route   GET /api/users/:id
@@ -90,6 +105,24 @@ router.delete(
     "/followers/:userId",
     passport.authenticate("jwt", { session: false }),
     deleteUserFromFollowers,
+);
+
+// @route   POST /api/users/saved/:postId
+// @desc    Save post to user's saved posts
+// @access  Private
+router.post(
+  "/saved/:postId",
+  passport.authenticate("jwt", { session: false }),
+  savePost,
+);
+
+// @route   DELETE /api/users/saved/:postId
+// @desc    Remove post from user's saved posts
+// @access  Private
+router.delete(
+  "/saved/:postId",
+  passport.authenticate("jwt", { session: false }),
+  unsavePost,
 );
 
 // @route   GET api/users

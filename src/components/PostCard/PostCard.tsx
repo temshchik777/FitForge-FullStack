@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Heart, MessageCircle, MoreHorizontal, Trash2, Pencil, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Trash2, Pencil, ChevronLeft, ChevronRight, X, Bookmark } from 'lucide-react';
 import {
   DropdownMenu, 
   DropdownMenuContent, 
@@ -22,6 +22,8 @@ import {
   AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger
 } from "@/components/ui/delete-dialog.tsx";
+import { apiService } from '@/api/api';
+import { Quries } from '@/api/quries';
 
 
 interface PostCardProps {
@@ -31,15 +33,19 @@ interface PostCardProps {
   onDelete: (postId: string) => void;
   onUpdate?: (postId: string, data: { content: string }) => Promise<any>;
   isAdmin?: boolean;
+  isSaved?: boolean;
+  onSaveToggle?: (postId: string) => void;
 }
 
 export default function PostCard({ 
   post, 
-  currentUserId, 
-  onLike, 
+  currentUserId,
+  onLike,
   onDelete,
   onUpdate,
-  isAdmin = false
+  isAdmin = false,
+  isSaved = false,
+  onSaveToggle
 }: PostCardProps) {
   // const [showAllImages, setShowAllImages] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -50,14 +56,48 @@ export default function PostCard({
   const [editOpen, setEditOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showFullscreenModal, setShowFullscreenModal] = useState(false);
+  const [saved, setSaved] = useState(isSaved);
+  const [savingPost, setSavingPost] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   
   const isLiked = currentUserId ? post.likes.includes(currentUserId) : false;
-  const isAuthor = currentUserId && String(post.user._id) === String(currentUserId);
+  const isAuthor = currentUserId && post.user && String(post.user._id) === String(currentUserId);
   const canEdit = isAuthor && Boolean(onUpdate);
   const canDelete = isAuthor || isAdmin; // Адмін може видаляти будь-які пости
   const hasMenu = canEdit || canDelete;
-  // debug logging removed
+  
+  useEffect(() => {
+    setSaved(isSaved);
+  }, [isSaved]);
+
+  const handleSaveToggle = async () => {
+    if (!currentUserId) {
+      toast.error("Увійдіть щоб зберігати пості");
+      return;
+    }
+
+    if (savingPost) return; // Предотвращаем двойные клики
+
+    setSavingPost(true);
+    try {
+      if (saved) {
+        await apiService.delete(Quries.API.USERS.UNSAVE_POST(post._id));
+        setSaved(false);
+        toast.success("Видалено зі збережених");
+      } else {
+        await apiService.post(Quries.API.USERS.SAVE_POST(post._id), {});
+        setSaved(true);
+        toast.success("Додано до збережених");
+      }
+      onSaveToggle?.(post._id);
+    } catch (error) {
+      console.error("Error toggling save:", error);
+      toast.error("Помилка збереження");
+    } finally {
+      setSavingPost(false);
+    }
+  };
+
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -381,6 +421,15 @@ export default function PostCard({
           >
             <MessageCircle className="h-4 w-4 mr-1" />
             Коментарі {comments.length > 0 ? `(${comments.length})` : ''}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSaveToggle}
+            className={saved ? 'text-blue-500' : ''}
+          >
+            <Bookmark className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
           </Button>
         </div>
       </CardContent>

@@ -29,19 +29,19 @@ export default function Security() {
     setError(null);
     setSuccess(null);
 
-    // Валидация
+    // Валідація
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-      setError("Пожалуйста, заполните все поля");
+      setError("Будь ласка, заповніть всі поля");
       return;
     }
 
     if (passwordData.newPassword.length < 6) {
-      setError("Новый пароль должен содержать минимум 6 символов");
+      setError("Новий пароль повинен містити мінімум 6 символів");
       return;
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError("Новый пароль и подтверждение не совпадают");
+      setError("Новий пароль і підтвердження не співпадають");
       return;
     }
 
@@ -53,7 +53,7 @@ export default function Security() {
         newPassword: passwordData.newPassword,
       });
 
-      setSuccess("Пароль успешно изменен!");
+      setSuccess("Пароль успішно змінен!");
       setPasswordData({
         currentPassword: "",
         newPassword: "",
@@ -61,7 +61,7 @@ export default function Security() {
       });
     } catch (err: any) {
       console.error("Error changing password:", err);
-      const errorMessage = err.response?.data?.password || err.response?.data?.message || "Не удалось изменить пароль";
+      const errorMessage = err.response?.data?.password || err.response?.data?.message || "Не вдалося змінити пароль";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -71,9 +71,9 @@ export default function Security() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Безопасность</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Безпека</h2>
         <p className="text-muted-foreground">
-          Управляйте паролем и настройками безопасности
+          Керуйте паролем та параметрами безпеки
         </p>
       </div>
 
@@ -91,45 +91,45 @@ export default function Security() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Изменить пароль</CardTitle>
+          <CardTitle>Змінити пароль</CardTitle>
           <CardDescription>
-            Обновите пароль для доступа к вашей учетной записи
+            Оновите пароль для доступу до вашого облікового запису
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="currentPassword">Текущий пароль</Label>
+            <Label htmlFor="currentPassword">Поточний пароль</Label>
             <Input
               id="currentPassword"
               name="currentPassword"
               type="password"
               value={passwordData.currentPassword}
               onChange={handleInputChange}
-              placeholder="Введите текущий пароль"
+              placeholder="Введіть поточний пароль"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="newPassword">Новый пароль</Label>
+            <Label htmlFor="newPassword">Новий пароль</Label>
             <Input
               id="newPassword"
               name="newPassword"
               type="password"
               value={passwordData.newPassword}
               onChange={handleInputChange}
-              placeholder="Введите новый пароль"
+              placeholder="Введіть новий пароль"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Подтвердите новый пароль</Label>
+            <Label htmlFor="confirmPassword">Підтвердіть новий пароль</Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
               type="password"
               value={passwordData.confirmPassword}
               onChange={handleInputChange}
-              placeholder="Повторите новый пароль"
+              placeholder="Повторіть новий пароль"
             />
           </div>
 
@@ -138,12 +138,12 @@ export default function Security() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Изменение...
+                  Змінювання...
                 </>
               ) : (
                 <>
                   <Lock className="w-4 h-4 mr-2" />
-                  Изменить пароль
+                  Змінити пароль
                 </>
               )}
             </Button>

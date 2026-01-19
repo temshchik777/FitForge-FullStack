@@ -14,9 +14,21 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import { Outlet } from "react-router";
+import { Outlet, useLocation } from "react-router";
 
 export function Layout() {
+  const location = useLocation();
+
+  const getPageTitle = (path: string) => {
+    if (path === "/" || path === "") return "Початкова";
+    if (path.includes("/account")) return "Мій облік";
+    if (path.includes("/saved")) return "Збережене";
+    if (path.includes("/settings")) return "Налаштування";
+    if (path.includes("/support")) return "Підтримка";
+    return "Поточна сторінка";
+  };
+
+  const currentPageTitle = getPageTitle(location.pathname);
   return (
       <SidebarProvider>
         <div className="flex h-screen w-full">
@@ -29,11 +41,11 @@ export function Layout() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
-                    <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                    <BreadcrumbLink href="/">Початкова</BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbPage>Current Page</BreadcrumbPage>
+                    <BreadcrumbPage>{currentPageTitle}</BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>

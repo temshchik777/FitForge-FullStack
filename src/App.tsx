@@ -2,12 +2,17 @@ import Home from "@/pages/Home/Home.tsx";
 import LoginPage from "@/pages/Login/Login.tsx";
 import RegisterPage from "@/pages/Register/Register.tsx";
 import Account from "@/pages/Account/Account.tsx";
+import Saved from "@/pages/Saved/Saved.tsx";
 
 import General from "@/pages/Settings/General";
 import Team from "@/pages/Settings/Team";
 import Billing from "@/pages/Settings/Billing";
 import Limits from "@/pages/Settings/Limits";
 import Security from "@/pages/Settings/Security";
+
+import FAQ from "@/pages/Support/FAQ";
+import ReportBug from "@/pages/Support/ReportBug";
+import About from "@/pages/Support/About";
 
 
 import {ToastContainer} from "react-toastify";
@@ -39,8 +44,12 @@ export function App() {
 
 
                         <Route path={ROUTS.ACCOUNT} element={<Account/>}/>
-                        <Route path={ROUTS.SAVED} element={<div>Saved Page</div>}/>
+                        <Route path={ROUTS.SAVED} element={<Saved/>}/>
                         <Route path={ROUTS.EDIT} element={<div>Edit Page</div>}/>
+
+                        <Route path={ROUTS.SUPPORT.FAQ} element={<FAQ/>}/>
+                        <Route path={ROUTS.SUPPORT.REPORT_BUG} element={<ReportBug/>}/>
+                        <Route path={ROUTS.SUPPORT.ABOUT} element={<About/>}/>
 
                         <Route path={'*'}></Route>
 

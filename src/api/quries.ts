@@ -12,6 +12,9 @@ export const Quries = {
       DELETE_AWARD: (awardId: string) => `/api/users/awards/${awardId}`,
       ADD_FOLLOWER: (userId: string) => `/api/users/followers/${userId}`,
       DELETE_FOLLOWER: (userId: string) => `/api/users/followers/${userId}`,
+      SAVE_POST: (postId: string) => `/api/users/saved/${postId}`,
+      UNSAVE_POST: (postId: string) => `/api/users/saved/${postId}`,
+      GET_SAVED_POSTS: "/api/users/saved",
     },
     AWARDS: {
       CREATE: "/api/awards",

@@ -97,23 +97,46 @@ export default function General() {
       }
     } catch (err: any) {
       console.error("Error uploading avatar:", err);
-      setError("Не удалось загрузить аватар");
+      setError("Не вдалося завантажити аватар");
     } finally {
       setUploadingAvatar(false);
     }
   };
 
-  // Сохранение изменений профиля
+  // Збереження змін профіля
   const handleSaveProfile = async () => {
     setError(null);
     setSuccess(null);
     setSaving(true);
 
     try {
+      const firstName = (userData.firstName || "").trim();
+      const lastName = (userData.lastName || "").trim();
+      const login = (userData.login || "").trim();
+      const nameRegex = /^[a-zA-Zа-яА-ЯІіЇїЄєҐґ]+$/;
+
+      if (!firstName || !lastName) {
+        setError("Ім'я та прізвище обов'язкові");
+        setSaving(false);
+        return;
+      }
+
+      if (!nameRegex.test(firstName)) {
+        setError("Ім'я має містити лише літери");
+        setSaving(false);
+        return;
+      }
+
+      if (!nameRegex.test(lastName)) {
+        setError("Прізвище має містити лише літери");
+        setSaving(false);
+        return;
+      }
+
       const updateData = {
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        login: userData.login,
+        firstName,
+        lastName,
+        login,
         email: userData.email,
         birthdate: userData.birthdate,
         gender: userData.gender,
@@ -124,11 +147,11 @@ export default function General() {
       
       if (response.data) {
         setUserData(response.data);
-        setSuccess("Профиль успешно обновлен!");
+        setSuccess("Профіль успішно оновлено!");
       }
     } catch (err: any) {
       console.error("Error updating profile:", err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.email || "Не удалось обновить профиль";
+      const errorMessage = err.response?.data?.message || err.response?.data?.email || "Не вдалося оновити профіль";
       setError(errorMessage);
     } finally {
       setSaving(false);
@@ -151,9 +174,9 @@ export default function General() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Общие настройки</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Загальні налаштування</h2>
         <p className="text-muted-foreground">
-          Управляйте информацией вашего профиля
+          Керуйте інформацією вашого профіля
         </p>
       </div>
 
@@ -171,9 +194,9 @@ export default function General() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Фотография профиля</CardTitle>
+          <CardTitle>Фото профіля</CardTitle>
           <CardDescription>
-            Загрузите фотографию профиля. Рекомендуемый размер: 400x400px
+            Завантажте фото профіля. Рекомендований розмір: 400x400px
           </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center gap-6">
@@ -196,12 +219,12 @@ export default function General() {
                   {uploadingAvatar ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Загрузка...
+                      Завантаження...
                     </>
                   ) : (
                     <>
                       <Camera className="w-4 h-4 mr-2" />
-                      Загрузить фото
+                      Завантажити фото
                     </>
                   )}
                 </span>
@@ -216,7 +239,7 @@ export default function General() {
               disabled={uploadingAvatar}
             />
             <p className="text-xs text-muted-foreground">
-              JPG, PNG или GIF. Максимум 5MB.
+              JPG, PNG або GIF. Максимум 5MB.
             </p>
           </div>
         </CardContent>
@@ -224,43 +247,43 @@ export default function General() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Личная информация</CardTitle>
+          <CardTitle>Особиста інформація</CardTitle>
           <CardDescription>
-            Обновите данные вашего профиля
+            Оновіть дані вашого профілю
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">Имя</Label>
+              <Label htmlFor="firstName">Ім'я</Label>
               <Input
                 id="firstName"
                 name="firstName"
                 value={userData.firstName}
                 onChange={handleInputChange}
-                placeholder="Введите имя"
+                placeholder="Введіть ім'я"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lastName">Фамилия</Label>
+              <Label htmlFor="lastName">Прізвище</Label>
               <Input
                 id="lastName"
                 name="lastName"
                 value={userData.lastName}
                 onChange={handleInputChange}
-                placeholder="Введите фамилию"
+                placeholder="Введіть прізвище"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="login">Логин</Label>
+              <Label htmlFor="login">Логін</Label>
               <Input
                 id="login"
                 name="login"
                 value={userData.login}
                 onChange={handleInputChange}
-                placeholder="Введите логин"
+                placeholder="Введіть логін"
               />
             </div>
 
@@ -272,12 +295,12 @@ export default function General() {
                 type="email"
                 value={userData.email}
                 onChange={handleInputChange}
-                placeholder="Введите email"
+                placeholder="Введіть email"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="birthdate">Дата рождения</Label>
+              <Label htmlFor="birthdate">Дата народження</Label>
               <Input
                 id="birthdate"
                 name="birthdate"
@@ -288,7 +311,7 @@ export default function General() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="gender">Пол</Label>
+              <Label htmlFor="gender">Стать</Label>
               <select
                 id="gender"
                 name="gender"
@@ -296,7 +319,7 @@ export default function General() {
                 onChange={handleInputChange}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="">Выберите пол</option>
+                <option value="">Виберіть стать</option>
                 <option value="male">Мужской</option>
                 <option value="female">Женский</option>
                 <option value="other">Другой</option>
@@ -314,7 +337,7 @@ export default function General() {
               ) : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  Сохранить изменения
+                  Зберегти зміни
                 </>
               )}
             </Button>
@@ -324,14 +347,14 @@ export default function General() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Изменить пароль</CardTitle>
+          <CardTitle>Змінити пароль</CardTitle>
           <CardDescription>
-            Для изменения пароля используйте отдельный раздел безопасности
+            Для зміни пароля використовуйте окремий розділ безпеки
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button variant="outline" onClick={() => navigate(Quries.CLIENT.PROFILE.SETTINGS + "/security")}>
-            Перейти к настройкам безопасности
+            Перейти до налаштувань безпеки
           </Button>
         </CardContent>
       </Card>
