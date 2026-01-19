@@ -1,4 +1,4 @@
-# Individual_Final_Project_Front
+# Individual_Final_Project_Frontкноп
 
 Індивідуальний фінальний проект передбачає створення веб - застосунку. Програмний продуктом є фітнес додаток.
 

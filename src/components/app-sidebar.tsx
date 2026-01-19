@@ -3,12 +3,13 @@ import { useEffect, useState } from "react"
 import {
   BookOpen,
   Bot,
-  Command,
+  Activity,
   Frame,
   LifeBuoy,
   Send,
   Settings2,
   Square,
+  Users,
 } from "lucide-react"
 
 import { ROUTS } from "@/routes/routes" 
@@ -105,6 +106,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         items: [],
       },
       {
+        title: "Підписки",
+        url: ROUTS.FOLLOWERS,
+        icon: Users,
+        items: [],
+      },
+      {
         title: "Редагувати",
         title: "Налаштування",
         url: "#", 
@@ -125,13 +132,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       }
     ],
-    navSecondary: [
-      {
-        title: "Надіслати відгук",
-        url: ROUTS.SUPPORT.REPORT_BUG,
-        icon: Send,
-      },
-    ],
+    navSecondary: [],
     projects: [],
   }
 
@@ -143,11 +144,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <a href="#">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Command className="size-4" />
+                  <Activity className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">FitForge</span>
-                  <span className="truncate text-xs">Enterprise</span>
+                  <span className="truncate text-xs text-muted-foreground">Community</span>
                 </div>
               </a>
             </SidebarMenuButton>

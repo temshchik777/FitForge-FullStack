@@ -3,6 +3,7 @@ import LoginPage from "@/pages/Login/Login.tsx";
 import RegisterPage from "@/pages/Register/Register.tsx";
 import Account from "@/pages/Account/Account.tsx";
 import Saved from "@/pages/Saved/Saved.tsx";
+import Followers from "@/pages/Followers/Followers.tsx";
 
 import General from "@/pages/Settings/General";
 import Team from "@/pages/Settings/Team";
@@ -44,6 +45,7 @@ export function App() {
 
 
                         <Route path={ROUTS.ACCOUNT} element={<Account/>}/>
+                        <Route path={ROUTS.FOLLOWERS} element={<Followers/>}/>
                         <Route path={ROUTS.SAVED} element={<Saved/>}/>
                         <Route path={ROUTS.EDIT} element={<div>Edit Page</div>}/>
 

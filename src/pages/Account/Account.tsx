@@ -1,5 +1,6 @@
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
-import {Award, Image, Lock, TrendingDown, TrendingUp, Target} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {Award, Image, Lock, TrendingDown, TrendingUp, Target, UserX} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {useState, useEffect} from "react";
 import {apiService} from "@/api/api";
@@ -17,6 +18,11 @@ export default function Account() {
     const [currentWeight, setCurrentWeight] = useState("");
     const [targetWeight, setTargetWeight] = useState("");
     const [weightHistory, setWeightHistory] = useState<any[]>([]);
+    const [followersCount, setFollowersCount] = useState(0);
+    const [followingCount, setFollowingCount] = useState(0);
+    const [followersList, setFollowersList] = useState<any[]>([]);
+    const [followingList, setFollowingList] = useState<any[]>([]);
+    const [unfollowingId, setUnfollowingId] = useState<string | null>(null);
     const { awards, loading: awardsLoading, error: awardsError } = useAwards();
     
     const { 
@@ -53,6 +59,13 @@ export default function Account() {
                 const userData = await apiService.get(Quries.API.USERS.GET_CURRENT);
                 setWeightHistory(userData.weightHistory || []);
                 setTargetWeight(userData.targetWeight || "");
+                setFollowersCount((userData.followedBy || []).length);
+                setFollowingCount((userData.followers || []).length);
+
+                // Для списков достанем свежие данные по id (с populate)
+                const profile = await apiService.get(Quries.API.USERS.GET_BY_ID(String(currentUserId)));
+                setFollowersList(profile?.followedBy || []);
+                setFollowingList(profile?.followers || []);
             } catch (error) {
                 console.error("Error fetching user data:", error);
             }
@@ -101,6 +114,22 @@ export default function Account() {
         }
     };
 
+    const handleUnfollow = async (userId: string) => {
+        if (unfollowingId) return;
+        setUnfollowingId(userId);
+        try {
+            await apiService.delete(Quries.API.USERS.DELETE_FOLLOWER(userId));
+            setFollowingList(prev => prev.filter(u => u._id !== userId));
+            setFollowingCount(prev => Math.max(0, prev - 1));
+            toast.success("Ви відписалися");
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || err.message || "Помилка відписки";
+            toast.error(msg);
+        } finally {
+            setUnfollowingId(null);
+        }
+    };
+
     const currentWeightValue = weightHistory.length > 0 
         ? weightHistory[weightHistory.length - 1].weight 
         : null;
@@ -136,6 +165,74 @@ export default function Account() {
                 >
                     Прогрес Ваги
                 </Button>
+            </div>
+
+            <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
+                <div>
+                    <span className="font-semibold text-foreground">{followersCount}</span> підписників
+                </div>
+                <div>
+                    <span className="font-semibold text-foreground">{followingCount}</span> підписок
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">Підписники</CardTitle>
+                        <CardDescription>Хто стежить за вами</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {followersList.length === 0 && (
+                            <p className="text-muted-foreground">Поки немає підписників</p>
+                        )}
+                        {followersList.map((u: any) => (
+                            <div key={u._id || u.id} className="flex items-center gap-3">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={u.avatarUrl} />
+                                    <AvatarFallback>{`${(u.firstName || "").charAt(0)}${(u.lastName || "").charAt(0)}`}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col">
+                                    <span className="font-semibold text-foreground">{u.firstName} {u.lastName}</span>
+                                    <span className="text-xs text-muted-foreground">{u.email}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">Підписки</CardTitle>
+                        <CardDescription>На кого підписані ви</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {followingList.length === 0 && (
+                            <p className="text-muted-foreground">Поки ні на кого не підписані</p>
+                        )}
+                        {followingList.map((u: any) => (
+                            <div key={u._id || u.id} className="flex items-center gap-3">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={u.avatarUrl} />
+                                    <AvatarFallback>{`${(u.firstName || "").charAt(0)}${(u.lastName || "").charAt(0)}`}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col">
+                                    <span className="font-semibold text-foreground">{u.firstName} {u.lastName}</span>
+                                    <span className="text-xs text-muted-foreground">{u.email}</span>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleUnfollow(u._id)}
+                                    disabled={unfollowingId === u._id}
+                                    className="ml-auto"
+                                >
+                                    <UserX className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Posts Section */}

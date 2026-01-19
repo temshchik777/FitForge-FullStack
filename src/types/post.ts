@@ -4,6 +4,8 @@ export interface User {
   lastName: string;
   email: string;
   avatarUrl?: string;
+  followedBy?: Array<{ _id: string }>;
+  followers?: Array<{ _id: string }>;
 }
 
 export interface Post {

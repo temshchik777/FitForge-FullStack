@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Heart, MessageCircle, MoreHorizontal, Trash2, Pencil, ChevronLeft, ChevronRight, X, Bookmark } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Trash2, Pencil, ChevronLeft, ChevronRight, X, Bookmark, UserPlus, UserCheck } from 'lucide-react';
 import {
   DropdownMenu, 
   DropdownMenuContent, 
@@ -58,6 +58,8 @@ export default function PostCard({
   const [showFullscreenModal, setShowFullscreenModal] = useState(false);
   const [saved, setSaved] = useState(isSaved);
   const [savingPost, setSavingPost] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   
   const isLiked = currentUserId ? post.likes.includes(currentUserId) : false;
@@ -102,6 +104,23 @@ export default function PostCard({
   useEffect(() => {
     setCurrentIndex(0);
   }, [post._id, post.imageUrls?.length]);
+
+  useEffect(() => {
+    if (!currentUserId || !post?.user?._id || currentUserId === String(post.user._id)) return;
+    let mounted = true;
+    const loadFollowState = async () => {
+      try {
+        const userData = await apiService.get(Quries.API.USERS.GET_BY_ID(String(post.user._id)));
+        const list = userData?.followedBy || [];
+        const following = Array.isArray(list) && list.some((u: any) => String(u?._id) === String(currentUserId));
+        if (mounted) setIsFollowing(following);
+      } catch (err) {
+        console.warn('Failed to load follow state', err);
+      }
+    };
+    loadFollowState();
+    return () => { mounted = false; };
+  }, [currentUserId, post?.user?._id]);
 
   const prevImage = () => {
     const len = post.imageUrls?.length || 1;
@@ -169,6 +188,32 @@ export default function PostCard({
     }
   }, [showComments]);
 
+  const handleFollowToggle = async () => {
+    if (!currentUserId) {
+      toast.error("Увійдіть, щоб підписуватися");
+      return;
+    }
+    if (!post?.user?._id || currentUserId === String(post.user._id)) return;
+    if (followLoading) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await apiService.delete(Quries.API.USERS.DELETE_FOLLOWER(String(post.user._id)));
+        setIsFollowing(false);
+        toast.success("Ви відписалися");
+      } else {
+        await apiService.put(Quries.API.USERS.ADD_FOLLOWER(String(post.user._id)), {});
+        setIsFollowing(true);
+        toast.success("Підписка оформлена");
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err.message || "Помилка підписки";
+      toast.error(msg);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
   return (
     <Card className="mb-4">
       <CardHeader className="flex flex-row items-center space-y-0">
@@ -186,6 +231,18 @@ export default function PostCard({
             {new Date(post.date).toLocaleDateString()}
           </p>
         </div>
+        {currentUserId && post?.user?._id && currentUserId !== String(post.user._id) && (
+          <Button
+            variant={isFollowing ? "secondary" : "outline"}
+            size="sm"
+            className="mr-2"
+            onClick={handleFollowToggle}
+            disabled={followLoading}
+          >
+            {isFollowing ? <UserCheck className="h-4 w-4 mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
+            {isFollowing ? "Відписатися" : "Підписатися"}
+          </Button>
+        )}
         
         {hasMenu && (
           <DropdownMenu>

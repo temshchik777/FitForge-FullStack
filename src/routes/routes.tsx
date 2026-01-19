@@ -6,6 +6,7 @@ export const ROUTS = {
   PROFILE: "/profile",
   ACCOUNT: "/account",
   SAVED: "/saved",
+  FOLLOWERS: "/followers",
   EDIT: "/edit",
 
   SETTINGS: {
