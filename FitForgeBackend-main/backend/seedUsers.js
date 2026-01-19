@@ -27,7 +27,7 @@ const users = [
   {
     firstName: 'Максим',
     lastName: 'Сидоренко',
-    login: 'maksym_s',
+    login: 'maksym',
     email: 'maksym@example.com',
     password: 'Password123!',
     gender: 'male',
@@ -38,6 +38,60 @@ const users = [
     lastName: 'Мельник',
     login: 'daryna',
     email: 'daryna@example.com',
+    password: 'Password123!',
+    gender: 'female',
+    avatarUrl: '',
+  },
+  {
+    firstName: 'Андрій',
+    lastName: 'Шевченко',
+    login: 'andriy',
+    email: 'andriy@example.com',
+    password: 'Password123!',
+    gender: 'male',
+    avatarUrl: '',
+  },
+  {
+    firstName: 'Марія',
+    lastName: 'Коваленко',
+    login: 'maria',
+    email: 'maria@example.com',
+    password: 'Password123!',
+    gender: 'female',
+    avatarUrl: '',
+  },
+  {
+    firstName: 'Тарас',
+    lastName: 'Бондаренко',
+    login: 'taras',
+    email: 'taras@example.com',
+    password: 'Password123!',
+    gender: 'male',
+    avatarUrl: '',
+  },
+  {
+    firstName: 'Софія',
+    lastName: 'Ткаченко',
+    login: 'sofia',
+    email: 'sofia@example.com',
+    password: 'Password123!',
+    gender: 'female',
+    avatarUrl: '',
+  },
+  {
+    firstName: 'Віктор',
+    lastName: 'Лисенко',
+    login: 'viktor',
+    email: 'viktor@example.com',
+    password: 'Password123!',
+    gender: 'male',
+    avatarUrl: '',
+  },
+  {
+    firstName: 'Катерина',
+    lastName: 'Іванова',
+    login: 'kateryna',
+    email: 'kateryna@example.com',
     password: 'Password123!',
     gender: 'female',
     avatarUrl: '',
@@ -72,11 +126,13 @@ async function seed() {
       });
 
       await user.save();
-      console.log(`Created: ${u.email} (login: ${u.login}, pass: ${u.password})`);
+      console.log(`✅ Створено: ${u.firstName} ${u.lastName} (login: ${u.login}, password: ${u.password})`);
       created += 1;
     }
 
-    console.log(`Done. Created ${created} users.`);
+    console.log(`\n🎉 Готово! Створено ${created} користувачів.`);
+    console.log('\n📋 Для входу використовуйте:');
+    console.log('Login: будь-який з вище | Password: Password123!');
   } catch (e) {
     console.error('Seed error:', e);
   } finally {

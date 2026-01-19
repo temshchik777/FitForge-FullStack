@@ -16,6 +16,7 @@ module.exports = async (passport) => {
     new JwtStrategy(opts, (jwt_payload, done) => {
       User.findById(jwt_payload.id)
         .select("-password")
+        .populate("awards") // Додаємо populate для нагород
         .then((user) => {
           if (user) {
             return done(null, user);
@@ -31,6 +32,7 @@ module.exports = async (passport) => {
     new JwtStrategy(opts, (jwt_payload, done) => {
       User.findById(jwt_payload.id)
         .select("-password")
+        .populate("awards") // Додаємо populate для нагород
         .then((user) => {
           if (user && user.isAdmin) {
             return done(null, user);

@@ -1,6 +1,7 @@
 import PostCard from "@/components/PostCard/PostCard";
 import CreatePostModal from "@/components/PostModal/CreatePostModal.tsx";
 import { usePosts } from "@/hooks/usePosts";
+import { getIsAdminFromToken } from "@/utils/tokenUtils";
 
 function getUserIdFromToken(): string | undefined {
   try {
@@ -28,6 +29,7 @@ export default function Home() {
   } = usePosts(); // без фильтров = все пользователи
 
   const currentUserId = localStorage.getItem("userId") || getUserIdFromToken();
+  const isAdmin = getIsAdminFromToken();
 
   return (
     <div className="flex flex-col gap-4">
@@ -53,6 +55,7 @@ export default function Home() {
               onLike={toggleLike}
               onDelete={deletePost}
               onUpdate={updatePost}
+              isAdmin={isAdmin}
             />
           ))}
         </div>

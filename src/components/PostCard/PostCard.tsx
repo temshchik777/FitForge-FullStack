@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Heart, MessageCircle, MoreHorizontal, Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Trash2, Pencil, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import {
   DropdownMenu, 
   DropdownMenuContent, 
@@ -30,6 +30,7 @@ interface PostCardProps {
   onLike: (postId: string) => void;
   onDelete: (postId: string) => void;
   onUpdate?: (postId: string, data: { content: string }) => Promise<any>;
+  isAdmin?: boolean;
 }
 
 export default function PostCard({ 
@@ -37,7 +38,8 @@ export default function PostCard({
   currentUserId, 
   onLike, 
   onDelete,
-  onUpdate
+  onUpdate,
+  isAdmin = false
 }: PostCardProps) {
   // const [showAllImages, setShowAllImages] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -47,12 +49,13 @@ export default function PostCard({
   const [showComments, setShowComments] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showFullscreenModal, setShowFullscreenModal] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   
   const isLiked = currentUserId ? post.likes.includes(currentUserId) : false;
   const isAuthor = currentUserId && String(post.user._id) === String(currentUserId);
   const canEdit = isAuthor && Boolean(onUpdate);
-  const canDelete = isAuthor;
+  const canDelete = isAuthor || isAdmin; // Адмін може видаляти будь-які пости
   const hasMenu = canEdit || canDelete;
   // debug logging removed
 
@@ -194,23 +197,58 @@ export default function PostCard({
         <p className="mb-4">{post.content}</p>
         
         {post.imageUrls && post.imageUrls.length > 0 && (
-          <div className="mb-4">
-            <div className="relative flex justify-center">
-              <img
-                src={post.imageUrls[currentIndex]}
-                alt={`Post image ${currentIndex + 1}`}
-                className="w-full max-w-md aspect-square object-cover rounded"
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-              />
-
-              {post.imageUrls.length > 1 && (
-                <>
+          <>
+            {/* Галерея фоток как в Instagram */}
+            {post.imageUrls.length === 1 ? (
+              // Одна фотка — большой квадрат
+              <div className="mb-4 flex justify-center">
+                <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-pointer max-w-lg" 
+                     onClick={() => setShowFullscreenModal(true)}>
+                  <img
+                    src={post.imageUrls[0]}
+                    alt="Post image"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                </div>
+              </div>
+            ) : post.imageUrls.length === 2 ? (
+              // Две фотки — рядом
+              <div className="mb-4 flex justify-center">
+                <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden max-w-lg">
+                  {post.imageUrls.map((url, idx) => (
+                    <div key={idx} className="aspect-square bg-gray-100 group cursor-pointer" 
+                         onClick={() => { setCurrentIndex(idx); setShowFullscreenModal(true); }}>
+                      <img
+                        src={url}
+                        alt={`Post image ${idx + 1}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              // 3+ фотки — показываем как карусель
+              <div className="flex flex-col items-center">
+                <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-pointer max-w-lg mb-3">
+                  <img
+                    src={post.imageUrls[currentIndex]}
+                    alt={`Post image ${currentIndex + 1}`}
+                    className="w-full h-full object-cover transition-opacity duration-300"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                  
+                  {/* Стрелки на карусели */}
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={prevImage}
-                    className="absolute top-1/2 -translate-y-1/2 left-2 rounded-full bg-black/30 text-white hover:bg-black/50"
+                    className="absolute top-1/2 -translate-y-1/2 left-2 rounded-full bg-black/30 text-white hover:bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
@@ -220,20 +258,107 @@ export default function PostCard({
                     variant="ghost"
                     size="icon"
                     onClick={nextImage}
-                    className="absolute top-1/2 -translate-y-1/2 right-2 rounded-full bg-black/30 text-white hover:bg-black/50"
+                    className="absolute top-1/2 -translate-y-1/2 right-2 rounded-full bg-black/30 text-white hover:bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </Button>
-                </>
-              )}
-            </div>
 
-            <div className="mt-2 text-xs text-muted-foreground text-center">
-              {currentIndex + 1} / {post.imageUrls.length}
-            </div>
-          </div>
+                  {/* Счётчик */}
+                  <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                    {currentIndex + 1}/{post.imageUrls.length}
+                  </div>
+                </div>
+
+                {/* Индикаторы-точки внизу */}
+                <div className="flex gap-1 justify-center flex-wrap">
+                  {post.imageUrls.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentIndex(idx)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        idx === currentIndex
+                          ? 'bg-gray-800 w-6'
+                          : 'bg-gray-400 hover:bg-gray-600'
+                      }`}
+                      aria-label={`Go to image ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Модальное окно для полноэкранного просмотра */}
+            {showFullscreenModal && (
+              <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+                <div className="relative w-full max-w-2xl max-h-screen">
+                  {/* Закрыть кнопка */}
+                  <button
+                    onClick={() => setShowFullscreenModal(false)}
+                    className="absolute -top-10 right-0 text-white hover:text-gray-300 z-60"
+                  >
+                    <X className="h-8 w-8" />
+                  </button>
+
+                  {/* Основное изображение */}
+                  <div className="relative bg-gray-900 rounded-lg overflow-hidden">
+                    <img
+                      src={post.imageUrls[currentIndex]}
+                      alt={`Full screen image ${currentIndex + 1}`}
+                      className="w-full h-auto max-h-screen object-cover"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+
+                    {/* Стрелки для навигации */}
+                    {post.imageUrls.length > 1 && (
+                      <>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={prevImage}
+                          className="absolute top-1/2 -translate-y-1/2 left-3 rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
+                        >
+                          <ChevronLeft className="h-8 w-8" />
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={nextImage}
+                          className="absolute top-1/2 -translate-y-1/2 right-3 rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
+                        >
+                          <ChevronRight className="h-8 w-8" />
+                        </Button>
+
+                        {/* Индикаторы внизу */}
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                          {post.imageUrls.map((_, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => setCurrentIndex(idx)}
+                              className={`h-2 rounded-full transition-all ${
+                                idx === currentIndex
+                                  ? 'bg-white w-6'
+                                  : 'bg-white/50 hover:bg-white/75 w-2'
+                              }`}
+                              aria-label={`Go to image ${idx + 1}`}
+                            />
+                          ))}
+                        </div>
+
+                        {/* Счётчик */}
+                        <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-2 rounded-lg text-sm">
+                          {currentIndex + 1} / {post.imageUrls.length}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
-        
         
         <div className="flex items-center gap-4 pt-2 border-t">
           <Button

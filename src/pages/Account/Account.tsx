@@ -1,17 +1,22 @@
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
-import {Award, Image, Plus, MinusCircle, PlusCircle} from "lucide-react";
+import {Award, Image, Lock, TrendingDown, TrendingUp, Target} from "lucide-react";
 import {Button} from "@/components/ui/button";
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import {apiService} from "@/api/api";
 import {Quries} from "@/api/quries";
 import useAwards from "@/api/useAwards/useAwards";
 import { usePosts } from "@/hooks/usePosts";
 import PostCard from "@/components/PostCard/PostCard";
 import CreatePostModal from "@/components/PostModal/CreatePostModal.tsx";
+import { getIsAdminFromToken } from "@/utils/tokenUtils";
+import { Input } from "@/components/ui/input";
+import { toast } from "react-toastify";
 
 export default function Account() {
     const [activeTab, setActiveTab] = useState("posts");
-    const [weightValue, setWeightValue] = useState(0);
+    const [currentWeight, setCurrentWeight] = useState("");
+    const [targetWeight, setTargetWeight] = useState("");
+    const [weightHistory, setWeightHistory] = useState<any[]>([]);
     const { awards, loading: awardsLoading, error: awardsError } = useAwards();
     
     const { 
@@ -40,112 +45,68 @@ export default function Account() {
     };
 
     const currentUserId = localStorage.getItem('userId') || getUserIdFromToken();
+    const isAdmin = getIsAdminFromToken();
 
-    const uploadAwards = async () => {
-        const awardsData = [
-            {
-                title: "Early Bird",
-                description: "You started your day early 5 times in a row!",
-                type: "streak",
-                threshold: 5,
-                icon: "AlarmClock",
-                imageUrl: "../awardsImg/alarm-clock-time-svgrepo-com.svg",
-                content: "Early Bird Award - You started your day early 5 times in a row!",
-                color: "blue"
-            },
-            {
-                title: "First Badge",
-                description: "You've earned your very first badge!",
-                type: "achievement",
-                threshold: 1,
-                icon: "Badge",
-                imageUrl: "../awardsImg/badge-svgrepo-com.svg",
-                content: "First Badge Award - You've earned your very first badge!",
-                color: "green"
-            },
-            {
-                title: "10-Day Streak",
-                description: "You have logged in for 10 days in a row!",
-                type: "streak",
-                threshold: 10,
-                icon: "Calendar",
-                imageUrl: "../awardsImg/calendar-svgrepo-com.svg",
-                content: "10-Day Streak Award - You have logged in for 10 days in a row!",
-                color: "yellow"
-            },
-            {
-                title: "On Fire",
-                description: "You maintained high activity for a whole week!",
-                type: "activity",
-                threshold: 7,
-                icon: "Fire",
-                imageUrl: "../awardsImg/fire-svgrepo-com.svg",
-                content: "On Fire Award - You maintained high activity for a whole week!",
-                color: "orange"
-            },
-            {
-                title: "Flame Keeper",
-                description: "Your motivation is burning bright!",
-                type: "motivation",
-                threshold: 30,
-                icon: "Flame",
-                imageUrl: "../awardsImg/flame-svgrepo-com.svg",
-                content: "Flame Keeper Award - Your motivation is burning bright!",
-                color: "red"
-            },
-            {
-                title: "Strong Start",
-                description: "You completed your first workout session!",
-                type: "workout",
-                threshold: 1,
-                icon: "FlexedBiceps",
-                imageUrl: "../awardsImg/flexed-biceps-medium-light-skin-tone-svgrepo-com.svg",
-                content: "Strong Start Award - You completed your first workout session!",
-                color: "purple"
-            },
-            {
-                title: "Healthy Meal",
-                description: "Logged your first healthy meal!",
-                type: "nutrition",
-                threshold: 1,
-                icon: "Meal",
-                imageUrl: "../awardsImg/meal-easter-svgrepo-com.svg",
-                content: "Healthy Meal Award - Logged your first healthy meal!",
-                color: "teal"
-            },
-            {
-                title: "Medalist",
-                description: "Earned 5 medals for achievements!",
-                type: "achievement",
-                threshold: 5,
-                icon: "Medal",
-                imageUrl: "../awardsImg/medal-svgrepo-com.svg",
-                content: "Medalist Award - Earned 5 medals for achievements!",
-                color: "gold"
-            },
-            {
-                title: "Hydration Master",
-                description: "Tracked your water intake for 7 days straight!",
-                type: "streak",
-                threshold: 7,
-                icon: "WaterDrop",
-                imageUrl: "../awardsImg/water-drop-svgrepo-com.svg",
-                content: "Hydration Master Award - Tracked your water intake for 7 days straight!",
-                color: "cyan"
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const userData = await apiService.get(Quries.API.USERS.GET_CURRENT);
+                setWeightHistory(userData.weightHistory || []);
+                setTargetWeight(userData.targetWeight || "");
+            } catch (error) {
+                console.error("Error fetching user data:", error);
             }
-        ];
+        };
+        fetchUserData();
+    }, []);
+
+    const addWeightRecord = async () => {
+        if (!currentWeight || isNaN(Number(currentWeight))) {
+            toast.error("Введіть коректну вагу");
+            return;
+        }
 
         try {
-            const awardPromises = awardsData.map((award) => {
-                return apiService.post(Quries.API.AWARDS.CREATE, award);
+            const response = await apiService.put(Quries.API.USERS.UPDATE, {
+                weightHistory: [
+                    ...weightHistory,
+                    { weight: Number(currentWeight), date: new Date() }
+                ]
             });
-
-            await Promise.all(awardPromises);
-            console.log('All awards uploaded successfully');
+            
+            setWeightHistory(response.weightHistory || []);
+            setCurrentWeight("");
+            toast.success("Вага збережена!");
         } catch (error) {
-            console.error('Error uploading awards:', error);
+            console.error("Error saving weight:", error);
+            toast.error("Помилка збереження ваги");
         }
     };
+
+    const saveTargetWeight = async () => {
+        if (!targetWeight || isNaN(Number(targetWeight))) {
+            toast.error("Введіть коректну цільову вагу");
+            return;
+        }
+
+        try {
+            await apiService.put(Quries.API.USERS.UPDATE, {
+                targetWeight: Number(targetWeight)
+            });
+            
+            toast.success("Цільова вага збережена!");
+        } catch (error) {
+            console.error("Error saving target weight:", error);
+            toast.error("Помилка збереження цільової ваги");
+        }
+    };
+
+    const currentWeightValue = weightHistory.length > 0 
+        ? weightHistory[weightHistory.length - 1].weight 
+        : null;
+    const weightDifference = currentWeightValue && targetWeight 
+        ? currentWeightValue - Number(targetWeight) 
+        : null;
 
     return (
         <div className="flex flex-col gap-4">
@@ -157,7 +118,7 @@ export default function Account() {
                     data-state={activeTab === "posts" ? "active" : "inactive"}
                     onClick={() => setActiveTab("posts")}
                 >
-                    Posts
+                    Пости
                 </Button>
                 <Button
                     variant={activeTab === "awards" ? "default" : "ghost"}
@@ -165,7 +126,7 @@ export default function Account() {
                     data-state={activeTab === "awards" ? "active" : "inactive"}
                     onClick={() => setActiveTab("awards")}
                 >
-                    Awards
+                    Нагороди
                 </Button>
                 <Button
                     variant={activeTab === "progress" ? "default" : "ghost"}
@@ -173,7 +134,7 @@ export default function Account() {
                     data-state={activeTab === "progress" ? "active" : "inactive"}
                     onClick={() => setActiveTab("progress")}
                 >
-                    Weight Progress
+                    Прогрес Ваги
                 </Button>
             </div>
 
@@ -207,6 +168,7 @@ export default function Account() {
                                     onLike={toggleLike}
                                     onDelete={deletePost}
                                     onUpdate={updatePost}
+                                    isAdmin={isAdmin}
                                 />
                             ))}
                         </div>
@@ -235,9 +197,6 @@ export default function Account() {
                 <div className="space-y-4">
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold">Мої нагороди</h2>
-                        <Button onClick={uploadAwards} variant="outline" className="flex items-center gap-2">
-                            <Plus className="h-4 w-4"/> Завантажити тестові нагороди
-                        </Button>
                     </div>
 
                     {awardsLoading && (
@@ -256,18 +215,33 @@ export default function Account() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {awards && awards.length > 0 ? (
                                 awards.map((award: any) => (
-                                    <Card key={award._id || award.id}>
-                                        <CardContent className="flex flex-col items-center p-6">
-                                            <Award className="h-12 w-12 text-yellow-500"/>
+                                    <Card 
+                                        key={award._id || award.id}
+                                        className={!award.unlocked ? "opacity-60 relative" : ""}
+                                    >
+                                        <CardContent className="flex flex-col items-center p-6 relative">
+                                            {!award.unlocked && (
+                                                <div className="absolute top-4 right-4">
+                                                    <Lock className="h-5 w-5 text-muted-foreground" />
+                                                </div>
+                                            )}
+                                            <Award 
+                                                className={`h-12 w-12 ${award.unlocked ? 'text-yellow-500' : 'text-gray-400'}`}
+                                            />
                                             <h3 className="mt-4 font-semibold">
-                                                {award.title || award.name || 'Award'}
+                                                {award.title || award.name || 'Нагорода'}
                                             </h3>
                                             <p className="text-sm text-muted-foreground text-center mt-2">
-                                                {award.description || 'Award description'}
+                                                {award.description || 'Опис нагороди'}
                                             </p>
-                                            {award.dateEarned && (
+                                            {award.unlocked && award.dateEarned && (
                                                 <p className="text-xs text-muted-foreground mt-2">
-                                                    Earned: {new Date(award.dateEarned).toLocaleDateString()}
+                                                    Отримано: {new Date(award.dateEarned).toLocaleDateString()}
+                                                </p>
+                                            )}
+                                            {!award.unlocked && (
+                                                <p className="text-xs text-muted-foreground mt-2 italic">
+                                                    Заблоковано
                                                 </p>
                                             )}
                                         </CardContent>
@@ -280,9 +254,9 @@ export default function Account() {
                                             <div className="rounded-full bg-muted p-3">
                                                 <Award className="h-6 w-6 text-muted-foreground"/>
                                             </div>
-                                            <h3 className="mt-4 font-semibold">No awards yet</h3>
+                                            <h3 className="mt-4 font-semibold">Нагород ще немає</h3>
                                             <p className="text-sm text-muted-foreground text-center mt-2">
-                                                Keep working out to earn awards!
+                                                Продовжуйте тренуватися щоб заробити нагороди!
                                             </p>
                                         </CardContent>
                                     </Card>
@@ -296,70 +270,115 @@ export default function Account() {
             {/* Weight Progress Section */}
             {activeTab === "progress" && (
                 <div className="space-y-4">
-                    <h2 className="text-2xl font-bold">Weight Progress</h2>
+                    <h2 className="text-2xl font-bold">Прогрес Ваги</h2>
 
+                    {/* Цільова вага */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Track Your Weight Changes</CardTitle>
+                            <CardTitle className="flex items-center gap-2">
+                                <Target className="h-5 w-5" />
+                                Цільова Вага
+                            </CardTitle>
                             <CardDescription>
-                                Use the controls to record your current weight
+                                Встановіть свою цільову вагу
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-8">
-                                <div>
-                                    <div className="flex justify-between mb-2">
-                                        <span>Weight Loss</span>
-                                        <span>Weight Gain</span>
-                                    </div>
-
-                                    <div className="flex items-center justify-center gap-4 my-6">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => setWeightValue(Math.max(-20, weightValue - 1))}
-                                        >
-                                            <MinusCircle className="h-4 w-4"/>
-                                        </Button>
-
-                                        <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
-                                            <div
-                                                className={`absolute top-0 bottom-0 ${weightValue < 0 ? 'right-1/2' : 'left-1/2'} ${weightValue < 0 ? 'bg-blue-500' : 'bg-red-500'}`}
-                                                style={{
-                                                    width: `${Math.abs(weightValue) * 2.5}%`,
-                                                    maxWidth: '50%'
-                                                }}
-                                            />
-                                            <div className="absolute top-0 bottom-0 left-1/2 w-4 h-4 bg-primary rounded-full -translate-x-1/2 -translate-y-1/4" />
-                                        </div>
-
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => setWeightValue(Math.min(20, weightValue + 1))}
-                                        >
-                                            <PlusCircle className="h-4 w-4"/>
-                                        </Button>
-                                    </div>
-
-                                    <div className="flex justify-between mt-2">
-                                        <span className="text-sm text-muted-foreground">-20 lbs</span>
-                                        <span className="text-sm font-medium">
-                                            Current: {weightValue > 0 ? '+' : ''}{weightValue} lbs
-                                        </span>
-                                        <span className="text-sm text-muted-foreground">+20 lbs</span>
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t">
-                                    <h3 className="font-medium mb-2">Weight History</h3>
-                                    <div className="h-[200px] bg-muted rounded-md flex items-center justify-center">
-                                        <p className="text-sm text-muted-foreground">
-                                            Your weight history chart will appear here
-                                        </p>
-                                    </div>
-                                </div>
+                            <div className="flex gap-2">
+                                <Input
+                                    type="number"
+                                    placeholder="Цільова вага (кг)"
+                                    value={targetWeight}
+                                    onChange={(e) => setTargetWeight(e.target.value)}
+                                />
+                                <Button onClick={saveTargetWeight}>
+                                    Зберегти
+                                </Button>
                             </div>
+                            {currentWeightValue && targetWeight && (
+                                <div className="mt-4 p-4 bg-muted rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Поточна вага</p>
+                                            <p className="text-2xl font-bold">{currentWeightValue} кг</p>
+                                        </div>
+                                        <div className="text-center">
+                                            {weightDifference! > 0 ? (
+                                                <TrendingDown className="h-8 w-8 text-green-500 mx-auto" />
+                                            ) : (
+                                                <TrendingUp className="h-8 w-8 text-blue-500 mx-auto" />
+                                            )}
+                                            <p className="text-sm font-medium mt-1">
+                                                {Math.abs(weightDifference!).toFixed(1)} кг до цілі
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm text-muted-foreground">Ціль</p>
+                                            <p className="text-2xl font-bold">{targetWeight} кг</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Додати запис ваги */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Додати Запис Ваги</CardTitle>
+                            <CardDescription>
+                                Записуйте свою вагу для відстеження прогресу
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex gap-2">
+                                <Input
+                                    type="number"
+                                    placeholder="Поточна вага (кг)"
+                                    value={currentWeight}
+                                    onChange={(e) => setCurrentWeight(e.target.value)}
+                                />
+                                <Button onClick={addWeightRecord}>
+                                    Додати
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Історія ваги */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Історія Ваги</CardTitle>
+                            <CardDescription>
+                                Всі ваші записи ваги
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {weightHistory.length > 0 ? (
+                                <div className="space-y-2">
+                                    {[...weightHistory].reverse().slice(0, 10).map((record: any, index: number) => (
+                                        <div 
+                                            key={index} 
+                                            className="flex justify-between items-center p-3 bg-muted rounded-lg"
+                                        >
+                                            <span className="font-medium">{record.weight} кг</span>
+                                            <span className="text-sm text-muted-foreground">
+                                                {new Date(record.date).toLocaleDateString('uk-UA', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                })}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <p className="text-sm text-muted-foreground">
+                                        Поки що немає записів. Додайте свій перший запис ваги!
+                                    </p>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
