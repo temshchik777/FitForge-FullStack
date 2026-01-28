@@ -37,11 +37,32 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // DB Config
 const db = require('./config/keys').mongoURI;
 
-// Connect to MongoDB
+// Connect to MongoDB with improved settings
 mongoose
-  .connect(db, { useNewUrlParser: true, useFindAndModify: false })
+  .connect(db, { 
+    useNewUrlParser: true, 
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+    maxPoolSize: 10,
+    minPoolSize: 2,
+    retryWrites: true,
+    retryReads: true
+  })
   .then(() => console.log('MongoDB Connected'))
-  .catch((err) => console.log(err));
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
+
+// Обработка ошибок подключения после инициализации
+mongoose.connection.on('error', err => {
+  console.error('MongoDB error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
 
 // Passport middleware
 app.use(passport.initialize());
