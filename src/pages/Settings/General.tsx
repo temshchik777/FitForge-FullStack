@@ -92,6 +92,7 @@ export default function General() {
       
       if (response.files && response.files.length > 0) {
         const imageUrl = `http://localhost:4000/uploads/${response.files[0]}`;
+        // Обновляем только локальное состояние для превью; без глобального события
         setUserData((prev) => ({ ...prev, avatarUrl: imageUrl }));
         setSuccess("Аватар успешно загружен");
       }
@@ -146,7 +147,15 @@ export default function General() {
       const response = await api.put(Quries.API.USERS.UPDATE, updateData);
       
       if (response.data) {
-        setUserData(response.data);
+        const updated = response.data;
+        const updatedAvatar = updated.avatarUrl ? `${updated.avatarUrl}?t=${Date.now()}` : '';
+        setUserData({ ...updated, avatarUrl: updatedAvatar });
+        // Обновим локальное хранилище и сообщим другим компонентам
+        try {
+          if (updatedAvatar) localStorage.setItem('avatarUrl', updatedAvatar);
+          const name = `${updated.firstName ?? ''} ${updated.lastName ?? ''}`.trim();
+          window.dispatchEvent(new CustomEvent('user:update', { detail: { avatarUrl: updatedAvatar, name, email: updated.email } }));
+        } catch {}
         setSuccess("Профіль успішно оновлено!");
       }
     } catch (err: any) {

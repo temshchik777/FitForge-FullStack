@@ -11,41 +11,21 @@ export const postApi = {
 
         // Добавляем изображения
         if (data.images && data.images.length > 0) {
-            console.log(`📤 Додавання ${data.images.length} зображень до FormData`);
             data.images.forEach((image, index) => {
-                console.log(`📸 Зображення ${index + 1}: ${image.name} (${image.size} bytes)`);
                 formData.append('images', image);
             });
-        } else {
-            console.log('⚠️ Зображень немає');
         }
 
-        console.log('🚀 Відправка FormData на бэкенд...');
         const response = await apiService.postFormData(Quries.API.POSTS.CREATE, formData);
 
-        console.log('✅ Відповідь від бэкенду:', response);
-        
-        if (response.post) {
-            console.log('📋 Деталі посту:', {
-                _id: response.post._id,
-                content: response.post.content,
-                imageUrls: response.post.imageUrls,
-                imageCount: response.post.imageUrls ? response.post.imageUrls.length : 0
-            });
-        }
-        
-        if (response.post && response.post.imageUrls && response.post.imageUrls.length > 0) {
+        // Нормализуем URL изображений в ответе
+        if (response.post && response.post.imageUrls) {
             response.post.imageUrls = response.post.imageUrls.map((url: string) => {
-                console.log(`🔗 Обработка URL: ${url}`);
-                if (url.startsWith('http://') || url.startsWith('https://')) {
-                    return url; // Уже полный URL
-                } else if (url.startsWith('/')) {
+                if (url.startsWith('/')) {
                     return `${BASE_URL}${url}`;
-                } else {
-                    return `${BASE_URL}/${url}`;
                 }
+                return url;
             });
-            console.log('✅ Обработанные URLs:', response.post.imageUrls);
         }
 
         return response;
@@ -60,6 +40,11 @@ export const postApi = {
             const paramKey = key === 'userId' ? 'user' : key;
             params.append(paramKey, String(value));
         });
+
+        // Явно задаём сортировку: новые посты сверху
+        if (!params.has('sort')) {
+            params.append('sort', '-date');
+        }
 
         const queryString = params.toString();
         const url = queryString ? `${Quries.API.POSTS.GET_ALL}?${queryString}` : Quries.API.POSTS.GET_ALL;
@@ -109,7 +94,7 @@ export const postApi = {
             const response = await apiService.patch(Quries.API.POSTS.UPDATE_LIKES(id));
             return response;
         } catch (error) {
-            console.log('Patch failed, trying PUT...');
+            // Fallback: try PUT
             const response = await apiService.put(Quries.API.POSTS.UPDATE_LIKES(id), {});
             return response;
         }

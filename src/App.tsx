@@ -12,7 +12,6 @@ import Limits from "@/pages/Settings/Limits";
 import Security from "@/pages/Settings/Security";
 
 import FAQ from "@/pages/Support/FAQ";
-import ReportBug from "@/pages/Support/ReportBug";
 import About from "@/pages/Support/About";
 
 
@@ -50,7 +49,6 @@ export function App() {
                         <Route path={ROUTS.EDIT} element={<div>Edit Page</div>}/>
 
                         <Route path={ROUTS.SUPPORT.FAQ} element={<FAQ/>}/>
-                        <Route path={ROUTS.SUPPORT.REPORT_BUG} element={<ReportBug/>}/>
                         <Route path={ROUTS.SUPPORT.ABOUT} element={<About/>}/>
 
                         <Route path={'*'}></Route>

@@ -21,7 +21,6 @@ export const ROUTS = {
   SUPPORT: {
     ROOT: "/support",
     FAQ: "/support/faq",
-    REPORT_BUG: "/support/report-bug",
     ABOUT: "/support/about",
   },
 }

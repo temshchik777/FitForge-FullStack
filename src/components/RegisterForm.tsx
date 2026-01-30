@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { validateEmail, validatePassword, validateName, validateLogin } from "@/lib/validation";
 import { cn } from "@/lib/utils.ts"
 import { Button } from "@/components/ui/button.tsx"
 import {
@@ -45,10 +46,22 @@ export function RegisterForm({
     });
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RegisterFormData, string>>>({});
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+        setFieldErrors({});
+
+        const next: Partial<Record<keyof RegisterFormData, string>> = {};
+        if (!validateName(formData.firstName)) next.firstName = "Ім'я має містити лише літери";
+        if (!validateName(formData.lastName)) next.lastName = "Прізвище має містити лише літери";
+        if (!validateLogin(formData.login)) next.login = "Логін: латиниця/цифри/._- (3-20)";
+        if (!validateEmail(formData.email)) next.email = "Некоректний email";
+        if (!validatePassword(formData.password, { min: 6 })) next.password = "Мінімум 6 символів";
+        if (formData.password !== formData.confirmPassword) next.confirmPassword = "Паролі не збігаються";
+        setFieldErrors(next);
+        if (Object.keys(next).length > 0) return;
 
         if (formData.password !== formData.confirmPassword) {
             setError("Паролі не збігаються");
@@ -104,6 +117,9 @@ export function RegisterForm({
                                         value={formData.firstName}
                                         onChange={handleChange}
                                     />
+                                    {fieldErrors.firstName && (
+                                      <span className="text-sm text-red-500">{fieldErrors.firstName}</span>
+                                    )}
                                 </div>
                                 <div className="grid gap-3">
                                     <Label htmlFor="lastName">Прізвище</Label>
@@ -116,6 +132,9 @@ export function RegisterForm({
                                         value={formData.lastName}
                                         onChange={handleChange}
                                     />
+                                    {fieldErrors.lastName && (
+                                      <span className="text-sm text-red-500">{fieldErrors.lastName}</span>
+                                    )}
                                 </div>
                                 <div className="grid gap-3">
                                     <Label htmlFor="login">Логін</Label>
@@ -128,6 +147,9 @@ export function RegisterForm({
                                         value={formData.login}
                                         onChange={handleChange}
                                     />
+                                    {fieldErrors.login && (
+                                      <span className="text-sm text-red-500">{fieldErrors.login}</span>
+                                    )}
                                 </div>
                                 <div className="grid gap-3">
                                     <Label htmlFor="email">Email</Label>
@@ -140,6 +162,9 @@ export function RegisterForm({
                                         value={formData.email}
                                         onChange={handleChange}
                                     />
+                                    {fieldErrors.email && (
+                                      <span className="text-sm text-red-500">{fieldErrors.email}</span>
+                                    )}
                                 </div>
                                 <div className="grid gap-3">
                                     <Label htmlFor="password">Пароль</Label>
@@ -151,6 +176,9 @@ export function RegisterForm({
                                         value={formData.password}
                                         onChange={handleChange}
                                     />
+                                    {fieldErrors.password && (
+                                      <span className="text-sm text-red-500">{fieldErrors.password}</span>
+                                    )}
                                 </div>
 
                                 <div className="grid gap-3">
@@ -163,6 +191,9 @@ export function RegisterForm({
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
                                     />
+                                    {fieldErrors.confirmPassword && (
+                                      <span className="text-sm text-red-500">{fieldErrors.confirmPassword}</span>
+                                    )}
                                 </div>
 
                                 {error && (
@@ -172,9 +203,6 @@ export function RegisterForm({
                                 <div className="flex flex-col gap-3">
                                     <Button type="submit" className="w-full">
                                         Зареєструватися
-                                    </Button>
-                                    <Button variant="outline" className="w-full">
-                                        Вхід через Google
                                     </Button>
                                 </div>
                             </div>

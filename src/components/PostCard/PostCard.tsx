@@ -93,7 +93,6 @@ export default function PostCard({
       }
       onSaveToggle?.(post._id);
     } catch (error) {
-      console.error("Error toggling save:", error);
       toast.error("Помилка збереження");
     } finally {
       setSavingPost(false);
@@ -115,7 +114,7 @@ export default function PostCard({
         const following = Array.isArray(list) && list.some((u: any) => String(u?._id) === String(currentUserId));
         if (mounted) setIsFollowing(following);
       } catch (err) {
-        console.warn('Failed to load follow state', err);
+        // Failed to load follow state
       }
     };
     loadFollowState();
@@ -140,7 +139,7 @@ export default function PostCard({
         const data = await commentApi.getCommentsByPost(post._id);
         if (mounted) setComments(data);
       } catch (err: any) {
-        console.error('Ошибка загрузки комментариев:', err);
+        // Error loading comments
       } finally {
         if (mounted) setLoadingComments(false);
       }
@@ -163,7 +162,6 @@ export default function PostCard({
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Помилка при додаванні коментаря';
       toast.error(msg);
-      console.error('Add comment error:', err);
     } finally {
       setSubmitting(false);
     }
@@ -177,7 +175,6 @@ export default function PostCard({
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Помилка при видаленні коментаря';
       toast.error(msg);
-      console.error('Delete comment error:', err);
     }
   };
 

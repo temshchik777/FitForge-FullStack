@@ -51,7 +51,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const data = JSON.parse(json);
       return data?.id || data?.userId || data?.sub || null;
     } catch (e) {
-      console.warn("Failed to decode token for userId", e);
       return null;
     }
   };
@@ -69,18 +68,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? `${response.firstName} ${response.lastName}`
             : response.firstName || response.lastName || response.email || "User";
 
+          const avatar = response.avatarUrl || "/avatars/shadcn.jpg";
           setUserData({
             name,
             email: response.email || "user@example.com",
-            avatar: response.avatarUrl || "/avatars/shadcn.jpg",
+            avatar,
           });
         }
       } catch (error) {
-        console.error("Failed to fetch user data:", error);
+        // Error fetching user data
       }
     };
 
     fetchUser();
+  }, [])
+
+  // Слушаем событие обновления пользователя, чтобы обновить аватар без перезагрузки
+  useEffect(() => {
+    const onUserUpdate = (e: any) => {
+      const nextAvatar = e?.detail?.avatarUrl;
+      const nextName = e?.detail?.name;
+      const nextEmail = e?.detail?.email;
+      if (nextAvatar || nextName || nextEmail) {
+        setUserData(prev => ({
+          name: nextName ?? prev.name,
+          email: nextEmail ?? prev.email,
+          avatar: nextAvatar ?? prev.avatar,
+        }));
+      }
+    };
+    window.addEventListener('user:update', onUserUpdate as EventListener);
+    return () => window.removeEventListener('user:update', onUserUpdate as EventListener);
   }, [])
 
   const data = {
@@ -112,7 +130,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         items: [],
       },
       {
-        title: "Редагувати",
         title: "Налаштування",
         url: "#", 
         icon: Settings2,
@@ -127,7 +144,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: LifeBuoy,
         items: [
           { title: "FAQ", url: ROUTS.SUPPORT.FAQ },
-          { title: "Звіт про проблему", url: ROUTS.SUPPORT.REPORT_BUG },
           { title: "Про нас", url: ROUTS.SUPPORT.ABOUT },
         ],
       }

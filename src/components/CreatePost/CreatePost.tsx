@@ -12,22 +12,15 @@ export const postApi = {
 
     // Добавляем контент
     formData.append('content', data.content);
-    console.log('📝 Adding content to FormData:', data.content);
 
     // Добавляем изображения
     if (data.images && data.images.length > 0) {
       data.images.forEach((image, index) => {
         formData.append('images', image);
-        console.log(`🖼️ Adding image ${index + 1}:`, image.name, image.size);
       });
     }
 
     // Отладка FormData
-    console.log('📦 FormData contents:');
-    for (let [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value);
-    }
-
     const response = await apiService.postFormData(Quries.API.POSTS.CREATE, formData);
 
     // Исправляем URL изображений

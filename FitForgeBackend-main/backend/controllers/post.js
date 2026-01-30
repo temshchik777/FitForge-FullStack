@@ -19,55 +19,38 @@ async function checkAndGrantAwards(userId) {
     const allAwards = await Award.find({});
     const userAwardIds = user.awards.map(a => a._id.toString());
 
-    // Нагорода за перший пост
-    const firstPostAward = allAwards.find(a => a.title === "Перша Відзнака");
+    // Нагорода за перший пост (соответствует "First Badge" в seed)
+    const firstPostAward = allAwards.find(a => a.title === "First Badge");
     if (firstPostAward && postCount >= 1 && !userAwardIds.includes(firstPostAward._id.toString())) {
       user.awards.push(firstPostAward._id);
-      console.log(`🏆 Користувач ${userId} отримав нагороду: ${firstPostAward.title}`);
     }
 
-    // Нагорода за 5 постів
-    const fivePostsAward = allAwards.find(a => a.title === "Сильний Старт");
+    // Нагорода за 5 постів (соответствует "Strong Start" в seed)
+    const fivePostsAward = allAwards.find(a => a.title === "Strong Start");
     if (fivePostsAward && postCount >= 5 && !userAwardIds.includes(fivePostsAward._id.toString())) {
       user.awards.push(fivePostsAward._id);
-      console.log(`🏆 Користувач ${userId} отримав нагороду: ${fivePostsAward.title}`);
     }
 
-    // Нагорода за 10 постів
-    const tenPostsAward = allAwards.find(a => a.title === "Медаліст");
+    // Нагорода за 10 постів (соответствует "Medalist" в seed)
+    const tenPostsAward = allAwards.find(a => a.title === "Medalist");
     if (tenPostsAward && postCount >= 10 && !userAwardIds.includes(tenPostsAward._id.toString())) {
       user.awards.push(tenPostsAward._id);
-      console.log(`🏆 Користувач ${userId} отримав нагороду: ${tenPostsAward.title}`);
     }
 
-    // Нагорода за 10 лайків
-    const tenLikesAward = allAwards.find(a => a.title === "Улюбленець");
-    if (tenLikesAward && totalLikes >= 10 && !userAwardIds.includes(tenLikesAward._id.toString())) {
-      user.awards.push(tenLikesAward._id);
-      console.log(`🏆 Користувач ${userId} отримав нагороду: ${tenLikesAward.title}`);
-    }
-
-    // Нагорода за 50 лайків
-    const fiftyLikesAward = allAwards.find(a => a.title === "Зірка");
-    if (fiftyLikesAward && totalLikes >= 50 && !userAwardIds.includes(fiftyLikesAward._id.toString())) {
-      user.awards.push(fiftyLikesAward._id);
-      console.log(`🏆 Користувач ${userId} отримав нагороду: ${fiftyLikesAward.title}`);
-    }
+    // Награды за лайки временно не выдаются (в seed нет соответствующих титулов)
 
     await user.save();
   } catch (error) {
-    console.error("❌ Помилка при видачі нагород:", error);
+    console.error(" Помилка при видачі нагород:", error);
   }
 }
 
 // controllers/post.js
 exports.createPost = async (req, res) => {
   try {
-    console.log("📥 Прийшли файли:", req.files);
-    console.log("📥 Body:", req.body);
-    console.log("📥 User:", req.user);
+   
     
-    // Получаем загруженные файлы (локальные или S3)
+    // Получаем загруженные файлы 
     const files = req.files;
     let imageUrls = [];
     
@@ -75,14 +58,14 @@ exports.createPost = async (req, res) => {
       imageUrls = files.map((file) => {
         // Для локальных файлов используем path, для S3 используем location
         const imagePath = file.location || `/uploads/${file.filename}`;
-        console.log(`📸 Файл: ${file.originalname} -> ${imagePath}`);
+        console.log(`Файл: ${file.originalname} -> ${imagePath}`);
         return imagePath;
       });
     }
 
-    console.log("✅ Загруженные изображения:", imageUrls);
-    console.log("✅ Контент:", req.body.content);
-    console.log("✅ Пользователь:", req.user);
+    console.log(" Завантажені зображення:", imageUrls);
+    console.log(" Контент:", req.body.content);
+    console.log(" Користувач:", req.user);
 
     // Создаем пост с правильными полями согласно модели
     const postData = {
@@ -252,7 +235,7 @@ exports.getPostsFilterParams = async (req, res, next) => {
   const mongooseQuery = filterParser(req.query);
   const perPage = Number(req.query.perPage) || 10;
   const startPage = Number(req.query.startPage) || 1;
-  const sort = req.query.sort || "date";
+  const sort = req.query.sort || "-date"; // по умолчанию новые сверху
 
   try {
     const posts = await Post.find(mongooseQuery)

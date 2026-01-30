@@ -14,6 +14,7 @@ import {ROUTS} from "@/routes/routes.tsx";
 import {apiService} from "@/api/api";
 import {Quries} from "@/api/quries";
 import {useState} from "react";
+import { validateEmail, validatePassword } from "@/lib/validation";
 import {toast} from "react-toastify";
 
 export function LoginForm({
@@ -25,6 +26,7 @@ export function LoginForm({
         password: ''
     });
     const [isLoading, setIsLoading] = useState(false);
+    const [errors, setErrors] = useState<{ loginOrEmail?: string; password?: string }>({});
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
@@ -36,6 +38,22 @@ export function LoginForm({
 
     const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        // Basic validation
+        const nextErrors: { loginOrEmail?: string; password?: string } = {};
+        const val = formData.loginOrEmail.trim();
+        const isEmail = val.includes('@');
+        if (!val) {
+            nextErrors.loginOrEmail = 'Вкажіть логін або email';
+        } else if (isEmail && !validateEmail(val)) {
+            nextErrors.loginOrEmail = 'Некоректний email';
+        }
+        if (!validatePassword(formData.password, { min: 6 })) {
+            nextErrors.password = 'Пароль має містити щонайменше 6 символів';
+        }
+        setErrors(nextErrors);
+        if (Object.keys(nextErrors).length > 0) {
+            return; // stop submit
+        }
         setIsLoading(true);
 
         try {
@@ -43,8 +61,6 @@ export function LoginForm({
                 loginOrEmail: formData.loginOrEmail,
                 password: formData.password
             });
-
-            console.log('🔍 Login response:', data); // Отладка
 
             if (data.token) {
                 localStorage.setItem('token', data.token);
@@ -64,11 +80,10 @@ export function LoginForm({
                         const uid = payload?.id || payload?.userId || payload?.sub;
                         if (uid) {
                             localStorage.setItem('userId', String(uid));
-                            console.log('✅ Saved userId from JWT:', uid);
                         }
                     }
                 } catch (e) {
-                    console.warn('⚠️ Failed to decode JWT payload for userId', e);
+                    // Failed to decode JWT
                 }
                 
                 toast.success('Вхід успішний!');
@@ -105,16 +120,13 @@ export function LoginForm({
                                     onChange={handleChange}
                                     required
                                 />
+                                {errors.loginOrEmail && (
+                                  <span className="text-sm text-red-500">{errors.loginOrEmail}</span>
+                                )}
                             </div>
                             <div className="grid gap-3">
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Пароль</Label>
-                                    <a
-                                        href="#"
-                                        className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                                    >
-                                        Забули пароль?
-                                    </a>
                                 </div>
                                 <Input
                                     id="password"
@@ -123,6 +135,9 @@ export function LoginForm({
                                     onChange={handleChange}
                                     required
                                 />
+                                {errors.password && (
+                                  <span className="text-sm text-red-500">{errors.password}</span>
+                                )}
                             </div>
                             <div className="flex flex-col gap-3">
                                 <Button
@@ -132,9 +147,7 @@ export function LoginForm({
                                 >
                                     {isLoading ? 'Вхід...' : 'Вхід'}
                                 </Button>
-                                <Button variant="outline" className="w-full">
-                                    Вхід через Google
-                                </Button>
+                                {/* Удалено: Вхід через Google */}
                             </div>
                         </div>
                         <div className="mt-4 text-center text-sm">

@@ -43,10 +43,14 @@ export function Layout() {
                   <BreadcrumbItem>
                     <BreadcrumbLink href="/">Початкова</BreadcrumbLink>
                   </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>{currentPageTitle}</BreadcrumbPage>
-                  </BreadcrumbItem>
+                  {location.pathname !== "/" && (
+                    <>
+                      <BreadcrumbSeparator />
+                      <BreadcrumbItem>
+                        <BreadcrumbPage>{currentPageTitle}</BreadcrumbPage>
+                      </BreadcrumbItem>
+                    </>
+                  )}
                 </BreadcrumbList>
               </Breadcrumb>
             </header>

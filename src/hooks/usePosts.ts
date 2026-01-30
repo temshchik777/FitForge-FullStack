@@ -57,7 +57,7 @@ export const usePosts = (filters: PostFilters = {}) => {
         post._id === postId ? { ...post, ...updatedPost, imageUrls: post.imageUrls } : post
       ));
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Ошибка при изменении лайка';
+      const errorMessage = err.response?.data?.message || 'Помилка при зміні лайка';
       toast.error(errorMessage);
       console.error('Ошибка лайка:', err);
     }
@@ -86,7 +86,6 @@ export const usePosts = (filters: PostFilters = {}) => {
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Помилка при видаленні поста';
       toast.error(errorMessage);
-      console.error('Помилка видалення поста:', err);
     }
   };
 

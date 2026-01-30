@@ -44,7 +44,6 @@ export default function Saved() {
       setSavedPosts(normalized);
     } catch (err: any) {
       setError(err.message || "Помилка завантаження");
-      console.error("Error fetching saved posts:", err);
     } finally {
       setLoading(false);
     }
@@ -59,7 +58,7 @@ export default function Saved() {
       await apiService.put(Quries.API.POSTS.UPDATE_LIKES(postId), {});
       fetchSavedPosts(); // Оновлюємо після лайку
     } catch (err) {
-      console.error("Error liking post:", err);
+      // Error
     }
   };
 
@@ -68,7 +67,7 @@ export default function Saved() {
       await apiService.delete(Quries.API.POSTS.DELETE(postId));
       setSavedPosts(prev => prev.filter(p => p._id !== postId));
     } catch (err) {
-      console.error("Error deleting post:", err);
+      // Error
     }
   };
 

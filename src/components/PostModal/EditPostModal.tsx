@@ -27,7 +27,7 @@ export default function EditPostModal({ open, onOpenChange, post, onUpdate }: Ed
       await onUpdate(post._id, { content });
       onOpenChange(false);
     } catch (err) {
-      console.error(err);
+      // Error
     } finally {
       setIsSubmitting(false);
     }
