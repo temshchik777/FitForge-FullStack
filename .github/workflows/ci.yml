@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - name: Install deps (frontend)
+        run: npm ci
+      - name: Lint (frontend)
+        run: npm run lint
+      - name: Build (frontend)
+        run: npm run build
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: FitForgeBackend-main/backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: FitForgeBackend-main/backend/package-lock.json
+      - name: Install deps (backend)
+        run: npm ci
+      - name: Syntax check server.js (no run)
+        run: node -e "new Function(require('fs').readFileSync('server.js','utf8')); console.log('Syntax OK')"
