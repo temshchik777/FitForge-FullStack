@@ -39,13 +39,13 @@ exports.createUser = (req, res, next) => {
         if (user.email === req.body.email) {
           return res
             .status(400)
-            .json({ message: `Email ${user.email} already exists"` });
+            .json({ message: `Email ${user.email} вже існує` });
         }
 
         if (user.login === req.body.login) {
           return res
             .status(400)
-            .json({ message: `Login ${user.login} already exists` });
+            .json({ message: `Логін ${user.login} вже існує` });
         }
       }
 
@@ -101,7 +101,7 @@ exports.loginUser = async (req, res, next) => {
     .then((user) => {
       // Check for user
       if (!user) {
-        errors.loginOrEmail = "User not found";
+        errors.loginOrEmail = "Користувача не знайдено";
         return res.status(404).json(errors);
       }
 
@@ -129,7 +129,7 @@ exports.loginUser = async (req, res, next) => {
             },
           );
         } else {
-          errors.password = "Password incorrect";
+          errors.password = "Невірний пароль";
           return res.status(400).json(errors);
         }
       });
@@ -156,7 +156,7 @@ exports.editUserInfo = (req, res) => {
   User.findOne({ _id: req.user.id })
     .then((user) => {
       if (!user) {
-        errors.id = "User not found";
+        errors.id = "Користувача не знайдено";
         return res.status(404).json(errors);
       }
 
@@ -171,7 +171,7 @@ exports.editUserInfo = (req, res) => {
         if (currentEmail !== newEmail) {
           User.findOne({ email: newEmail }).then((user) => {
             if (user) {
-              errors.email = `Email ${newEmail} is already exists`;
+              errors.email = `Email ${newEmail} вже існує`;
               res.status(400).json(errors);
               return;
             }
@@ -185,7 +185,7 @@ exports.editUserInfo = (req, res) => {
         if (currentLogin !== newLogin) {
           User.findOne({ login: newLogin }).then((user) => {
             if (user) {
-              errors.login = `Login ${newLogin} is already exists`;
+              errors.login = `Логін ${newLogin} вже існує`;
               res.status(400).json(errors);
               return;
             }
@@ -544,5 +544,76 @@ exports.getUsersFilterParams = async (req, res, next) => {
     res.status(400).json({
       message: `Error happened on server: "${err}" `,
     });
+  }
+};
+
+// --- Workouts ---
+// Get current user's workouts
+exports.getWorkouts = async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.user.id }).select("workouts");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.json({ workouts: user.workouts || [] });
+  } catch (err) {
+    return res.status(400).json({ message: `Error happened on server: "${err}" ` });
+  }
+};
+
+// Add workout entry
+exports.addWorkoutEntry = async (req, res) => {
+  try {
+    const { exercise, sets, reps, weight, notes, date } = req.body;
+    if (!exercise || typeof exercise !== "string") {
+      return res.status(400).json({ message: "exercise is required" });
+    }
+
+    const entry = {
+      exercise,
+      sets: Number(sets) || 0,
+      reps: Number(reps) || 0,
+      weight: Number(weight) || 0,
+      notes: notes || "",
+      date: date ? new Date(date) : new Date()
+    };
+
+    const user = await User.findOneAndUpdate(
+      { _id: req.user.id },
+      { $push: { workouts: entry } },
+      { new: true }
+    ).select("workouts");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({ message: "Workout added", workouts: user.workouts });
+  } catch (err) {
+    return res.status(400).json({ message: `Error happened on server: "${err}" ` });
+  }
+};
+
+// Delete workout entry by id
+exports.deleteWorkoutEntry = async (req, res) => {
+  try {
+    const { workoutId } = req.params;
+    if (!workoutId) {
+      return res.status(400).json({ message: "workoutId is required" });
+    }
+
+    const user = await User.findOneAndUpdate(
+      { _id: req.user.id },
+      { $pull: { workouts: { _id: workoutId } } },
+      { new: true }
+    ).select("workouts");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({ message: "Workout deleted", workouts: user.workouts });
+  } catch (err) {
+    return res.status(400).json({ message: `Error happened on server: "${err}" ` });
   }
 };

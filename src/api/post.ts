@@ -2,27 +2,28 @@ import { apiService } from './api';
 import { Post, CreatePostRequest, PostsResponse, PostFilters } from '../types/post';
 import { Quries } from './quries';
 
-const BASE_URL = 'http://localhost:4000'; // Добавляем базовый URL
+// Базовый URL бэкенда: из переменной окружения, иначе dev-локалка
+const API_BASE = (import.meta as any)?.env?.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:4000';
 
 export const postApi = {
     createPost: async (data: CreatePostRequest): Promise<{ message: string; post: Post }> => {
         const formData = new FormData();
         formData.append('content', data.content);
 
-        // Добавляем изображения
+        // Додаємо зображення
         if (data.images && data.images.length > 0) {
-            data.images.forEach((image, index) => {
+            data.images.forEach((image) => {
                 formData.append('images', image);
             });
         }
 
         const response = await apiService.postFormData(Quries.API.POSTS.CREATE, formData);
 
-        // Нормализуем URL изображений в ответе
+        // Нормалізуємо URL-адреси зображень у відповіді
         if (response.post && response.post.imageUrls) {
             response.post.imageUrls = response.post.imageUrls.map((url: string) => {
                 if (url.startsWith('/')) {
-                    return `${BASE_URL}${url}`;
+                    return `${API_BASE}${url}`;
                 }
                 return url;
             });
@@ -36,12 +37,31 @@ export const postApi = {
 
         Object.entries(filters).forEach(([key, value]) => {
             if (value === undefined || value === null) return;
-            // Бэкенд ожидает поле "user", на фронте используется "userId"
+            // Бекенд очікує поле "user", на фронті використовується "userId"
             const paramKey = key === 'userId' ? 'user' : key;
             params.append(paramKey, String(value));
         });
 
-        // Явно задаём сортировку: новые посты сверху
+        // Переклад limit/offset у perPage/startPage, якщо передані у фільтрах
+        if ((filters as any).limit !== undefined && !params.has('perPage')) {
+            params.append('perPage', String((filters as any).limit));
+        }
+        if ((filters as any).offset !== undefined && !params.has('startPage')) {
+            const limit = Number((filters as any).limit) || 10;
+            const offset = Number((filters as any).offset) || 0;
+            const startPage = Math.floor(offset / limit) + 1;
+            params.append('startPage', String(startPage));
+        }
+
+        // Щоб бачити більше постів одразу
+        if (!params.has('perPage')) {
+            params.append('perPage', '100');
+        }
+        if (!params.has('startPage')) {
+            params.append('startPage', '1');
+        }
+
+        // Явно задаємо сортування: нові пости зверху
         if (!params.has('sort')) {
             params.append('sort', '-date');
         }
@@ -55,7 +75,7 @@ export const postApi = {
                 ...post,
                 imageUrls: post.imageUrls ? post.imageUrls.map((url: string) => {
                     if (url.startsWith('/')) {
-                        return `${BASE_URL}${url}`;
+                        return `${API_BASE}${url}`;
                     }
                     return url;
                 }) : []
@@ -65,15 +85,15 @@ export const postApi = {
         return response;
     },
 
-    // Получение поста по ID
+    // Отримання поста за ID
     getPostById: async (id: string): Promise<Post> => {
         const response = await apiService.get(Quries.API.POSTS.GET_BY_ID(id));
 
-        // Исправляем URL изображений
+        // Виправляємо URL зображень
         if (response.imageUrls) {
             response.imageUrls = response.imageUrls.map((url: string) => {
                 if (url.startsWith('/')) {
-                    return `${BASE_URL}${url}`;
+                    return `${API_BASE}${url}`;
                 }
                 return url;
             });
@@ -82,7 +102,7 @@ export const postApi = {
         return response;
     },
 
-    // Обновление поста
+    // Оновлення поста
     updatePost: async (id: string, data: Partial<Post>): Promise<Post> => {
         const response = await apiService.put(Quries.API.POSTS.UPDATE(id), data);
         return response;
@@ -100,7 +120,7 @@ export const postApi = {
         }
     },
 
-    // Удаление поста
+    // Видалення поста
     deletePost: async (id: string): Promise<{ message: string }> => {
         const response = await apiService.delete(Quries.API.POSTS.DELETE(id));
         return response;

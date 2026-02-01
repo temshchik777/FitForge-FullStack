@@ -1,32 +1,46 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const Customer = require('./models/User');
+const mongoose = require("mongoose");
+const keys = require("./config/keys");
+require("./models/User");
+const User = mongoose.model("users");
 
-mongoose.connect('mongodb+srv://FitForge:tlSASVfijzUBZwaV@fitforge.rw1obgt.mongodb.net/fitforge_db?retryWrites=true&w=majority', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-});
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const out = {};
+  for (const a of args) {
+    const m = a.match(/^--([^=]+)=(.+)$/);
+    if (m) out[m[1]] = m[2];
+  }
+  return out;
+}
 
-const createAdmin = async () => {
-    const password = await bcrypt.hash('admin123', 10);
+(async () => {
+  const { email, login } = parseArgs();
+  if (!email && !login) {
+    console.error("Usage: node createAdmin.js --email=user@example.com OR --login=username");
+    process.exit(1);
+  }
 
-    const admin = new Customer({
-        firstName: 'Admin',
-        lastName: 'User',
-        login: 'admin',
-        email: 'admin@example.com',
-        password: password,
-        customerNo: 10000000,
-        isAdmin: true,
-        enabled: true
-    });
+  try {
+    await mongoose.connect(keys.mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const query = email ? { email } : { login };
+    const user = await User.findOne(query);
+    if (!user) {
+      console.error("User not found:", query);
+      process.exit(2);
+    }
 
-    await admin.save();
-    console.log('Логин admin  Пароль admin123');
-    mongoose.connection.close();
-};
-
-createAdmin().catch(err => {
-    console.error('Ошибка при создании админа', err);
-    mongoose.connection.close();
-});
+    if (user.isAdmin) {
+      console.log("User is already admin:", email || login);
+    } else {
+      user.isAdmin = true;
+      await user.save();
+      console.log("User promoted to admin:", email || login);
+    }
+  } catch (err) {
+    console.error("Error:", err);
+    process.exit(3);
+  } finally {
+    await mongoose.disconnect();
+    process.exit(0);
+  }
+})();

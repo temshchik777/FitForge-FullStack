@@ -2,14 +2,13 @@ const JwtStrategy = require("passport-jwt").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
 const mongoose = require("mongoose");
 const User = mongoose.model("users");
-const getConfigs = require("../config/getConfigs");
 const keys = require("./keys.js");
 
-module.exports = async (passport) => {
+module.exports = (passport) => {
   const opts = {};
-  const configs = await getConfigs();
+  // Конфиг JWT без зависимостей от БД, чтобы стратегия всегда регистрировалась
   opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-  opts.secretOrKey = keys.secretOrKey;
+  opts.secretOrKey = keys.secretOrKey || "dev_secret_change_me";
 
   passport.use(
     "jwt",

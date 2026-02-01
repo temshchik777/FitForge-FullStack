@@ -37,14 +37,14 @@ export default function CreatePostModal({
       return;
     }
 
-    // Check file size
-    const maxSize = 10 * 1024 * 1024; // 10MB (было 5MB)
+    // Розмір файлу не більше 10MB
+    const maxSize = 10 * 1024 * 1024; // 10MB 
     const invalidFiles = files.filter((file) => file.size > maxSize);
 
     if (invalidFiles.length > 0) {
       toast.error("Розмір файлу не повинен перевищувати 10MB");
       console.error(
-        "Некорректні файли:",
+        "Некоректні файли:",
         invalidFiles.map((f) => ({ name: f.name, size: f.size })),
       );
       return;
@@ -52,7 +52,7 @@ export default function CreatePostModal({
 
     setImages((prev) => [...prev, ...files]);
 
-    // Create image previews
+    // Попередній перегляд зображень
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -78,8 +78,8 @@ export default function CreatePostModal({
     setIsLoading(true);
 
     try {
-      // Send post with images
-      const result = await postApi.createPost({
+      // Надіслати пост із зображеннями
+      await postApi.createPost({
         content: content.trim(),
         images,
       });

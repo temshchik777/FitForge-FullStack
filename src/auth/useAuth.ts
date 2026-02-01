@@ -1,8 +1,9 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {Quries} from "@/api/quries.ts";
+import { ROUTS } from "@/routes/routes.tsx";
 
-const BASE_API_URL = "http://localhost:4000"; // это твой backend
+const BASE_API_URL = "http://localhost:4000"; //backend
 
 export function useAuth() {
     const navigate = useNavigate();
@@ -36,7 +37,8 @@ export function useAuth() {
                 } catch {}
                 throw new Error(message);
             }
-            // Backend returns created user object, not a token
+       
+            // За потреби обробіть успішну відповідь на реєстрацію тут
             await response.json();
         } catch (error) {
             throw error;
@@ -56,12 +58,12 @@ export function useAuth() {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || "Ошибка при входе");
+                throw new Error(error.message || "Помилка при вході");
             }
 
             const data = await response.json();
             localStorage.setItem("token", data.token);
-            navigate(Quries.CLIENT.PROFILE.DASHBOARD);
+            navigate(ROUTS.ACCOUNT);
         } catch (error) {
             throw error;
         }
@@ -69,7 +71,7 @@ export function useAuth() {
 
     const logout = useCallback(() => {
         localStorage.removeItem("token");
-        navigate(Quries.CLIENT.AUTH.LOGIN);
+        navigate(ROUTS.LOGIN);
     }, [navigate]);
 
     const isAuthenticated = !!localStorage.getItem("token");

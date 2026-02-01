@@ -9,9 +9,8 @@ mongoose.connect(keys.mongoURI, {
 });
 
 const db = mongoose.connection;
-db.on('error', console.error.bind(console, '❌ Помилка підключення MongoDB:'));
 db.once('open', async () => {
-  console.log('✅ MongoDB Connected');
+  
 
   const awards = [
     {
@@ -69,23 +68,23 @@ db.once('open', async () => {
   try {
     // Видаляємо старі нагороди
     await Award.deleteMany({});
-    console.log('🗑️  Старі нагороди видалено');
+   
 
     // Додаємо нові
     for (const award of awards) {
       const existingAward = await Award.findOne({ title: award.title });
       if (!existingAward) {
         await Award.create(award);
-        console.log(`✅ Створено нагороду: ${award.title}`);
+       
       } else {
-        console.log(`⏭️  Пропускаємо: ${award.title} вже існує`);
+       
       }
     }
 
-    console.log('🎉 Всі нагороди успішно ініціалізовано!');
+    console.log(' Всі нагороди успішно ініціалізовано!');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Помилка:', error);
+    console.error(' Помилка:', error);
     process.exit(1);
   }
 });

@@ -67,6 +67,9 @@ export default function PostCard({
   const canEdit = isAuthor && Boolean(onUpdate);
   const canDelete = isAuthor || isAdmin; // Адмін може видаляти будь-які пости
   const hasMenu = canEdit || canDelete;
+
+  // Безпечний користувач для випадків, коли автор поста видалений або не запопулячений
+  const userSafe = post.user || ({ firstName: 'Видалений', lastName: 'користувач', avatarUrl: '', _id: '' } as any);
   
   useEffect(() => {
     setSaved(isSaved);
@@ -74,11 +77,11 @@ export default function PostCard({
 
   const handleSaveToggle = async () => {
     if (!currentUserId) {
-      toast.error("Увійдіть щоб зберігати пості");
+      toast.error("Увійдіть щоб зберігати пости");
       return;
     }
 
-    if (savingPost) return; // Предотвращаем двойные клики
+    if (savingPost) return; // Запобігаємо дублюванню запитів
 
     setSavingPost(true);
     try {
@@ -103,6 +106,16 @@ export default function PostCard({
   useEffect(() => {
     setCurrentIndex(0);
   }, [post._id, post.imageUrls?.length]);
+
+  // Закриття модалки по Esc
+  useEffect(() => {
+    if (!showFullscreenModal) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowFullscreenModal(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showFullscreenModal]);
 
   useEffect(() => {
     if (!currentUserId || !post?.user?._id || currentUserId === String(post.user._id)) return;
@@ -215,14 +228,14 @@ export default function PostCard({
     <Card className="mb-4">
       <CardHeader className="flex flex-row items-center space-y-0">
         <Avatar className="h-10 w-10">
-          <AvatarImage src={post.user.avatarUrl} />
+          <AvatarImage src={userSafe.avatarUrl} />
           <AvatarFallback>
-            {post.user.firstName[0]}{post.user.lastName[0]}
+            {(userSafe.firstName?.[0] || 'В')}{(userSafe.lastName?.[0] || 'к')}
           </AvatarFallback>
         </Avatar>
         <div className="ml-3 flex-1">
           <p className="font-medium">
-            {post.user.firstName} {post.user.lastName}
+            {userSafe.firstName} {userSafe.lastName}
           </p>
           <p className="text-sm text-muted-foreground">
             {new Date(post.date).toLocaleDateString()}
@@ -292,9 +305,7 @@ export default function PostCard({
         
         {post.imageUrls && post.imageUrls.length > 0 && (
           <>
-            {/* Галерея фоток как в Instagram */}
             {post.imageUrls.length === 1 ? (
-              // Одна фотка — большой квадрат
               <div className="mb-4 flex justify-center">
                 <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-pointer max-w-lg" 
                      onClick={() => setShowFullscreenModal(true)}>
@@ -308,7 +319,6 @@ export default function PostCard({
                 </div>
               </div>
             ) : post.imageUrls.length === 2 ? (
-              // Две фотки — рядом
               <div className="mb-4 flex justify-center">
                 <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden max-w-lg">
                   {post.imageUrls.map((url, idx) => (
@@ -326,7 +336,7 @@ export default function PostCard({
                 </div>
               </div>
             ) : (
-              // 3+ фотки — показываем как карусель
+             
               <div className="flex flex-col items-center">
                 <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-pointer max-w-lg mb-3">
                   <img
@@ -336,7 +346,7 @@ export default function PostCard({
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                   
-                  {/* Стрелки на карусели */}
+                  {/* Стрілки каруселі */}
                   <Button
                     type="button"
                     variant="ghost"
@@ -357,13 +367,13 @@ export default function PostCard({
                     <ChevronRight className="h-5 w-5" />
                   </Button>
 
-                  {/* Счётчик */}
+                  {/* Счетчик */}
                   <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                     {currentIndex + 1}/{post.imageUrls.length}
                   </div>
                 </div>
 
-                {/* Индикаторы-точки внизу */}
+                {/* Індикатори-точки внизу */}
                 <div className="flex gap-1 justify-center flex-wrap">
                   {post.imageUrls.map((_, idx) => (
                     <button
@@ -381,20 +391,29 @@ export default function PostCard({
               </div>
             )}
 
-            {/* Модальное окно для полноэкранного просмотра */}
+            {/* Модальне вікно для повноекранного перегляду */}
             {showFullscreenModal && (
-              <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-                <div className="relative w-full max-w-2xl max-h-screen">
-                  {/* Закрыть кнопка */}
-                  <button
-                    onClick={() => setShowFullscreenModal(false)}
-                    className="absolute -top-10 right-0 text-white hover:text-gray-300 z-60"
-                  >
-                    <X className="h-8 w-8" />
-                  </button>
-
-                  {/* Основное изображение */}
+              <div
+                className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+                role="dialog"
+                aria-modal="true"
+                onClick={() => setShowFullscreenModal(false)}
+              >
+                <div
+                  className="relative w-full max-w-2xl max-h-screen"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Основне зображення */}
                   <div className="relative bg-gray-900 rounded-lg overflow-hidden">
+                    {/* Кнопка закриття всередині контейнера */}
+                    <button
+                      onClick={() => setShowFullscreenModal(false)}
+                      className="absolute top-3 right-3 text-white hover:text-gray-300 z-50"
+                      aria-label="Закрити"
+                    >
+                      <X className="h-8 w-8" />
+                    </button>
+
                     <img
                       src={post.imageUrls[currentIndex]}
                       alt={`Full screen image ${currentIndex + 1}`}
@@ -402,7 +421,7 @@ export default function PostCard({
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
 
-                    {/* Стрелки для навигации */}
+                    {/* Стрілки для навігації */}
                     {post.imageUrls.length > 1 && (
                       <>
                         <Button
@@ -425,7 +444,7 @@ export default function PostCard({
                           <ChevronRight className="h-8 w-8" />
                         </Button>
 
-                        {/* Индикаторы внизу */}
+                        {/* Індикатори внизу */}
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                           {post.imageUrls.map((_, idx) => (
                             <button
@@ -441,7 +460,7 @@ export default function PostCard({
                           ))}
                         </div>
 
-                        {/* Счётчик */}
+                        {/* Счетчик */}
                         <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-2 rounded-lg text-sm">
                           {currentIndex + 1} / {post.imageUrls.length}
                         </div>

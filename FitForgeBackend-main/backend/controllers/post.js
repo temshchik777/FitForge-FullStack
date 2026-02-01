@@ -19,7 +19,7 @@ async function checkAndGrantAwards(userId) {
     const allAwards = await Award.find({});
     const userAwardIds = user.awards.map(a => a._id.toString());
 
-    // Нагорода за перший пост (соответствует "First Badge" в seed)
+    // Нагорода за перший пост (соответствует "First Badge" в seed) 
     const firstPostAward = allAwards.find(a => a.title === "First Badge");
     if (firstPostAward && postCount >= 1 && !userAwardIds.includes(firstPostAward._id.toString())) {
       user.awards.push(firstPostAward._id);
@@ -37,7 +37,7 @@ async function checkAndGrantAwards(userId) {
       user.awards.push(tenPostsAward._id);
     }
 
-    // Награды за лайки временно не выдаются (в seed нет соответствующих титулов)
+
 
     await user.save();
   } catch (error) {
@@ -56,7 +56,7 @@ exports.createPost = async (req, res) => {
     
     if (files && files.length > 0) {
       imageUrls = files.map((file) => {
-        // Для локальных файлов используем path, для S3 используем location
+
         const imagePath = file.location || `/uploads/${file.filename}`;
         console.log(`Файл: ${file.originalname} -> ${imagePath}`);
         return imagePath;
@@ -67,7 +67,7 @@ exports.createPost = async (req, res) => {
     console.log(" Контент:", req.body.content);
     console.log(" Користувач:", req.user);
 
-    // Создаем пост с правильными полями согласно модели
+    // Створюємо пост з правильними полями відповідно до моделі
     const postData = {
       user: req.user.id, // поле user (не author)
       content: req.body.content,
@@ -77,36 +77,32 @@ exports.createPost = async (req, res) => {
       date: new Date() // поле date (не createdAt)
     };
 
-    console.log("💾 Сохраняем постData:", postData);
-
-    // Сохраняем в MongoDB
+    // Зберігаємо в MongoDB
     const newPost = new Post(postData);
     await newPost.save();
 
-    // Получаем созданный пост с populate
+    // Отримуємо створений пост з populate
     const populatedPost = await Post.findById(newPost._id)
       .populate("user", "firstName lastName email avatarUrl");
 
-    console.log("✅ Пост сохранен в БД:", populatedPost);
 
     // Перевіряємо та видаємо нагороди
     await checkAndGrantAwards(req.user.id);
 
     res.status(201).json({
-      message: "Пост создан успешно",
+      message: "Пост створено успішно",
       post: populatedPost
     });
     
   } catch (error) {
-    console.error("❌ Ошибка создания поста:", error);
+
     res.status(500).json({
-      error: "Ошибка при создании поста",
+      error: "Помилка при створенні поста",
       details: error.message,
     });
   }
 };
 
-// Остальные методы остаются без изменений...
 exports.updatePost = (req, res, next) => {
   Post.findOne({ _id: req.params.id })
     .then((post) => {

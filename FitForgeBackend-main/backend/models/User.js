@@ -56,6 +56,17 @@ const UserSchema = new Schema(
       type: Number,
       default: null
     },
+    workouts: [
+      {
+        _id: { type: Schema.Types.ObjectId, auto: true },
+        exercise: { type: String, required: true },
+        sets: { type: Number, default: 0 },
+        reps: { type: Number, default: 0 },
+        weight: { type: Number, default: 0 },
+        notes: { type: String, default: "" },
+        date: { type: Date, default: Date.now }
+      }
+    ],
     date: {
       type: Date,
       default: Date.now,

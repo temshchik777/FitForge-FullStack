@@ -3,9 +3,16 @@ export const validateEmail = (email: string) => {
   return re.test(String(email).trim());
 };
 
-export const validatePassword = (password: string, opts: { min?: number } = {}) => {
-  const min = opts.min ?? 6;
-  return typeof password === 'string' && password.length >= min;
+export const validatePassword = (password: string, opts: { min?: number; max?: number } = {}) => {
+  const min = opts.min ?? 7;
+  const max = opts.max ?? 30;
+  const re = /^[a-zA-Z0-9]+$/;
+  return (
+    typeof password === 'string' &&
+    re.test(password) &&
+    password.length >= min &&
+    password.length <= max
+  );
 };
 
 export const validateName = (name: string) => {
@@ -14,8 +21,8 @@ export const validateName = (name: string) => {
 };
 
 export const validateLogin = (login: string) => {
-  // латиница/цифры/._-, 3..20 символов
-  const re = /^[a-zA-Z0-9._-]{3,20}$/;
+  // латиница и цифры, 3..20 символов
+  const re = /^[a-zA-Z0-9]{3,20}$/;
   return re.test(login.trim());
 };
 

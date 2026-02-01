@@ -3,6 +3,7 @@ import axios from 'axios';
 // Create axios instance with default config
 export const api = axios.create({
   baseURL: 'http://localhost:4000', // Base URL from existing fetch calls
+  timeout: 15000,
 });
 
 const LOGIN_PATH = '/login';
@@ -78,13 +79,22 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Handle common errors here
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error('API Error:', error.response.data);
+    const config: any = error?.config || {};
 
-      // Handle 401 Unauthorized - cleanup token and redirect to login
+    // Auto-retry for transient network errors (status 0 / no response)
+    const isTransientNetworkError = !error.response && (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error'));
+    if (isTransientNetworkError) {
+      config.__retryCount = (config.__retryCount || 0) + 1;
+      const maxRetries = 2;
+      if (config.__retryCount <= maxRetries) {
+        const delay = 200 * config.__retryCount; // simple backoff
+        return new Promise((resolve) => setTimeout(resolve, delay)).then(() => api(config));
+      }
+    }
+
+    // Handle common errors
+    if (error.response) {
+      console.error('API Error:', error.response.data);
       if (error.response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
@@ -93,10 +103,8 @@ api.interceptors.response.use(
         }
       }
     } else if (error.request) {
-      // The request was made but no response was received
       console.error('Network Error:', error.request);
     } else {
-      // Something happened in setting up the request that triggered an Error
       console.error('Request Error:', error.message);
     }
 
@@ -120,7 +128,6 @@ export const apiService = {
 
   // POST request with FormData (for file uploads)
   postFormData: async (url: string, formData: FormData) => {
-    // НЕ устанавливаем Content-Type вручную — пусть браузер выставит boundary сам
     const response = await api.post(url, formData);
     return response.data;
   },

@@ -15,12 +15,46 @@ const cors = require('cors');
 
 const app = express();
 
-// CORS должен быть первым
+// CORS повинен бути першим 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: (origin, callback) => {
+     // Дозволяємо запити з localhost і 127.0.0.1 для середовища розробки на портах 5173/5174
+    const allowedOrigins = [/^http:\/\/localhost:517[3-4]$/, /^http:\/\/127\.0\.0\.1:517[3-4]$/];
+
+    // Дозволені продакшн-домени з ENV 
+    const envFrontend1 = process.env.FRONTEND_URL || null;
+    const envFrontend2 = process.env.FRONTEND_URL_2 || null;
+    const envRegex = process.env.FRONTEND_URL_REGEX || null; // опциональный regex
+    const allowedStaticOrigins = [envFrontend1, envFrontend2].filter(Boolean);
+
+    if (!origin) return callback(null, true); // allow same-origin or curl
+
+    // Dev localhost
+    if (allowedOrigins.some((re) => re.test(origin))) {
+      return callback(null, true);
+    }
+
+    // ENV-списки 
+    if (allowedStaticOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // ENV-regex
+    if (envRegex) {
+      try {
+        const re = new RegExp(envRegex);
+        if (re.test(origin)) return callback(null, true);
+      } catch (e) {
+       
+      }
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200,
 }));
 
 // Body parser middleware
@@ -52,7 +86,7 @@ mongoose
   .then(() => console.log('MongoDB Connected'))
   .catch((err) => {
     console.error('MongoDB connection error:', err);
-    process.exit(1);
+    // Не завершаем процесс: сервер продолжит работать без подключения к БД
   });
 
 // Обработка ошибок подключения после инициализации

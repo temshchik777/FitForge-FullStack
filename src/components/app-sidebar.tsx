@@ -4,9 +4,7 @@ import {
   BookOpen,
   Bot,
   Activity,
-  Frame,
   LifeBuoy,
-  Send,
   Settings2,
   Square,
   Users,
@@ -83,7 +81,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     fetchUser();
   }, [])
 
-  // Слушаем событие обновления пользователя, чтобы обновить аватар без перезагрузки
+  //Слухаємо евент оновлення користувача, щоб оновити аватар без перезавантаження
   useEffect(() => {
     const onUserUpdate = (e: any) => {
       const nextAvatar = e?.detail?.avatarUrl;

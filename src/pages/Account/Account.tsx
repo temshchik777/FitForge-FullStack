@@ -15,9 +15,18 @@ import { toast } from "react-toastify";
 
 export default function Account() {
     const [activeTab, setActiveTab] = useState("posts");
+    // Вага
     const [currentWeight, setCurrentWeight] = useState("");
     const [targetWeight, setTargetWeight] = useState("");
     const [weightHistory, setWeightHistory] = useState<any[]>([]);
+    // Тренування
+    const [workouts, setWorkouts] = useState<any[]>([]);
+    const [workoutsLoading, setWorkoutsLoading] = useState(false);
+    const [exercise, setExercise] = useState("");
+    const [sets, setSets] = useState<string>("");
+    const [reps, setReps] = useState<string>("");
+    const [wWeight, setWWeight] = useState<string>("");
+    const [notes, setNotes] = useState<string>("");
     const [followersCount, setFollowersCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
     const [followersList, setFollowersList] = useState<any[]>([]);
@@ -35,7 +44,7 @@ export default function Account() {
         refetch: refetchPosts 
     } = usePosts({ userId: (localStorage.getItem('userId') || undefined) as string | undefined });
 
-    // Получаем текущий userId: сначала из localStorage, иначе из payload JWT-товкена (fallback)
+    // Отримуємо поточний userId: спочатку з localStorage, інакше з payload токена (fallback)
     const getUserIdFromToken = (): string | undefined => {
         try {
             const token = localStorage.getItem('token');
@@ -62,10 +71,21 @@ export default function Account() {
                 setFollowersCount((userData.followedBy || []).length);
                 setFollowingCount((userData.followers || []).length);
 
-                // Для списков достанем свежие данные по id (с populate)
+                // Для списків дістанемо свіжі дані по id (з populate)
                 const profile = await apiService.get(Quries.API.USERS.GET_BY_ID(String(currentUserId)));
                 setFollowersList(profile?.followedBy || []);
                 setFollowingList(profile?.followers || []);
+
+                // Тренування (поточного користувача)
+                try {
+                    setWorkoutsLoading(true);
+                    const wr = await apiService.get(Quries.API.USERS.WORKOUTS.GET);
+                    setWorkouts(wr.workouts || []);
+                } catch (e) {
+                    console.warn("Не вдалося завантажити тренування", e);
+                } finally {
+                    setWorkoutsLoading(false);
+                }
             } catch (error) {
                 console.error("Error fetching user data:", error);
             }
@@ -137,6 +157,45 @@ export default function Account() {
         ? currentWeightValue - Number(targetWeight) 
         : null;
 
+    // --- Workouts handlers ---
+    const addWorkout = async () => {
+        if (!exercise.trim()) {
+            toast.error("Вкажіть назву вправи");
+            return;
+        }
+        const payload: any = {
+            exercise: exercise.trim(),
+            sets: sets ? Number(sets) : 0,
+            reps: reps ? Number(reps) : 0,
+            weight: wWeight ? Number(wWeight) : 0,
+            notes: notes?.trim() || ""
+        };
+        try {
+            const res = await apiService.post(Quries.API.USERS.WORKOUTS.ADD, payload);
+            setWorkouts(res.workouts || []);
+            setExercise("");
+            setSets("");
+            setReps("");
+            setWWeight("");
+            setNotes("");
+            toast.success("Тренування додано");
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || err.message || "Помилка додавання тренування";
+            toast.error(msg);
+        }
+    };
+
+    const deleteWorkout = async (id: string) => {
+        try {
+            const res = await apiService.delete(Quries.API.USERS.WORKOUTS.DELETE(id));
+            setWorkouts(res.workouts || workouts.filter((w: any) => w._id !== id));
+            toast.success("Тренування видалено");
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || err.message || "Помилка видалення тренування";
+            toast.error(msg);
+        }
+    };
+
     return (
         <div className="flex flex-col gap-4">
             {/* Custom Tab Navigation */}
@@ -164,6 +223,14 @@ export default function Account() {
                     onClick={() => setActiveTab("progress")}
                 >
                     Прогрес Ваги
+                </Button>
+                <Button
+                    variant={activeTab === "workouts" ? "default" : "ghost"}
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+                    data-state={activeTab === "workouts" ? "active" : "inactive"}
+                    onClick={() => setActiveTab("workouts")}
+                >
+                    Тренування
                 </Button>
             </div>
 
@@ -473,6 +540,103 @@ export default function Account() {
                                 <div className="text-center py-8">
                                     <p className="text-sm text-muted-foreground">
                                         Поки що немає записів. Додайте свій перший запис ваги!
+                                    </p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {/* Workouts Section */}
+            {activeTab === "workouts" && (
+                <div className="space-y-4">
+                    <h2 className="text-2xl font-bold">Мої Тренування</h2>
+
+                    {/* Додати тренування */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Додати Тренування</CardTitle>
+                            <CardDescription>
+                                Запишіть вашу вправу та параметри
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                                <Input
+                                    placeholder="Вправа (наприклад, Присідання)"
+                                    value={exercise}
+                                    onChange={(e) => setExercise(e.target.value)}
+                                />
+                                <Input
+                                    type="number"
+                                    placeholder="Підходи"
+                                    value={sets}
+                                    onChange={(e) => setSets(e.target.value)}
+                                />
+                                <Input
+                                    type="number"
+                                    placeholder="Повтори"
+                                    value={reps}
+                                    onChange={(e) => setReps(e.target.value)}
+                                />
+                                <Input
+                                    type="number"
+                                    placeholder="Вага (кг)"
+                                    value={wWeight}
+                                    onChange={(e) => setWWeight(e.target.value)}
+                                />
+                                <Input
+                                    placeholder="Нотатки"
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                />
+                            </div>
+                            <div className="mt-3">
+                                <Button onClick={addWorkout}>Додати</Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Список тренувань */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Журнал Тренувань</CardTitle>
+                            <CardDescription>
+                                Останні записи ваших тренувань
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {workoutsLoading ? (
+                                <div className="text-center py-8">
+                                    <p>Завантаження тренувань...</p>
+                                </div>
+                            ) : workouts && workouts.length > 0 ? (
+                                <div className="space-y-2">
+                                    {[...workouts].reverse().slice(0, 20).map((w: any) => (
+                                        <div key={w._id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                                            <div className="flex-1">
+                                                <p className="font-semibold text-foreground">{w.exercise}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {(w.sets ?? 0)} x {(w.reps ?? 0)}{typeof w.weight === 'number' ? ` — ${w.weight} кг` : ''}
+                                                </p>
+                                                {w.notes && (
+                                                    <p className="text-xs text-muted-foreground">{w.notes}</p>
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {new Date(w.date).toLocaleDateString('uk-UA')}
+                                            </div>
+                                            <Button variant="outline" size="sm" onClick={() => deleteWorkout(w._id)}>
+                                                Видалити
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <p className="text-sm text-muted-foreground">
+                                        Немає записів. Додайте свою першу вправу!
                                     </p>
                                 </div>
                             )}

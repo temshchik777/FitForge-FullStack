@@ -38,7 +38,7 @@ export function LoginForm({
 
     const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        // Basic validation
+        // базова валідація
         const nextErrors: { loginOrEmail?: string; password?: string } = {};
         const val = formData.loginOrEmail.trim();
         const isEmail = val.includes('@');
@@ -47,12 +47,12 @@ export function LoginForm({
         } else if (isEmail && !validateEmail(val)) {
             nextErrors.loginOrEmail = 'Некоректний email';
         }
-        if (!validatePassword(formData.password, { min: 6 })) {
-            nextErrors.password = 'Пароль має містити щонайменше 6 символів';
+        if (!validatePassword(formData.password, { min: 7 })) {
+            nextErrors.password = 'Пароль має містити щонайменше 7 символів (латиниця та цифри)';
         }
         setErrors(nextErrors);
         if (Object.keys(nextErrors).length > 0) {
-            return; // stop submit
+            return; // зупинити відправку
         }
         setIsLoading(true);
 
@@ -65,7 +65,7 @@ export function LoginForm({
             if (data.token) {
                 localStorage.setItem('token', data.token);
 
-                // Пытаемся извлечь userId из JWT, если сервер его не вернул явно
+                // пробуємо дістати userId з JWT і зберегти його
                 try {
                     const bearer = String(data.token);
                     const rawToken = bearer.startsWith('Bearer ')
@@ -83,7 +83,7 @@ export function LoginForm({
                         }
                     }
                 } catch (e) {
-                    // Failed to decode JWT
+                    // Не вдалося декодувати JWT
                 }
                 
                 toast.success('Вхід успішний!');
@@ -147,7 +147,7 @@ export function LoginForm({
                                 >
                                     {isLoading ? 'Вхід...' : 'Вхід'}
                                 </Button>
-                                {/* Удалено: Вхід через Google */}
+                                
                             </div>
                         </div>
                         <div className="mt-4 text-center text-sm">

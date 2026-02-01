@@ -72,7 +72,7 @@ export default function Home() {
 
       {!loading && !error && posts.length > 0 && (
         <div className="space-y-4">
-          {posts.filter(post => post.user).map((post) => (
+          {posts.map((post) => (
             <PostCard
               key={post._id}
               post={post}

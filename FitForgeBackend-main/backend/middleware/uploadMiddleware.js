@@ -2,7 +2,7 @@ const multer = require('multer');
 
 // Локальная загрузка файлов
 const upload = multer({
-    dest: 'uploads/', // файлы будут сохраняться локально в папку "uploads"
+    dest: 'uploads/', // файлы будут сохраняться локально в папку uploads
     limits: {
         fileSize: 10 * 1024 * 1024, // максимум 10 МБ
         files: 5

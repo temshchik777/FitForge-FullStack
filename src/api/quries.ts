@@ -15,6 +15,11 @@ export const Quries = {
       SAVE_POST: (postId: string) => `/api/users/saved/${postId}`,
       UNSAVE_POST: (postId: string) => `/api/users/saved/${postId}`,
       GET_SAVED_POSTS: "/api/users/saved",
+      WORKOUTS: {
+        GET: "/api/users/workouts",
+        ADD: "/api/users/workouts",
+        DELETE: (workoutId: string) => `/api/users/workouts/${workoutId}`,
+      },
     },
     AWARDS: {
       CREATE: "/api/awards",
@@ -44,14 +49,5 @@ export const Quries = {
       DELETE_IMAGE: "/api/files/delete",
     },
   },
-  CLIENT: {
-    AUTH: {
-      LOGIN: "/login",
-      REGISTER: "/register",
-    },
-    PROFILE: {
-      HOME: "/profile",
-      SETTINGS: "/settings",
-    },
-  },
+  
 };

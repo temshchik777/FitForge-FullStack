@@ -8,6 +8,7 @@ import { Camera, Loader2, Save, User } from "lucide-react";
 import { api, apiService } from "@/api/api";
 import { Quries } from "@/api/quries";
 import { useNavigate } from "react-router-dom";
+import { ROUTS } from "@/routes/routes.tsx";
 
 interface UserData {
   _id: string;
@@ -27,6 +28,7 @@ export default function General() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   
   const [userData, setUserData] = useState<UserData>({
     _id: "",
@@ -62,6 +64,52 @@ export default function General() {
     setUserData((prev) => ({ ...prev, [name]: value }));
     setError(null);
     setSuccess(null);
+    setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  // Валидация полей формы
+  const validateFields = () => {
+    const errs: Record<string, string> = {};
+
+    const firstName = (userData.firstName || "").trim();
+    const lastName = (userData.lastName || "").trim();
+    const login = (userData.login || "").trim();
+    const email = (userData.email || "").trim();
+    const birthdate = (userData.birthdate || "").trim();
+    const gender = (userData.gender || "").trim();
+
+    const nameRegex = /^[a-zA-Zа-яА-ЯІіЇїЄєҐґ]+$/;
+    const loginRegex = /^[a-zA-Z0-9]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!firstName) errs.firstName = "Ім'я обов'язкове";
+    else if (firstName.length < 2 || firstName.length > 25) errs.firstName = "Довжина 2–25 символів";
+    else if (!nameRegex.test(firstName)) errs.firstName = "Лише літери";
+
+    if (!lastName) errs.lastName = "Прізвище обов'язкове";
+    else if (lastName.length < 2 || lastName.length > 25) errs.lastName = "Довжина 2–25 символів";
+    else if (!nameRegex.test(lastName)) errs.lastName = "Лише літери";
+
+    if (!login) errs.login = "Логін обов'язковий";
+    else if (login.length < 3 || login.length > 20) errs.login = "Довжина 3–20 символів";
+    else if (!loginRegex.test(login)) errs.login = "Лише латинські літери та цифри";
+
+    if (!email) errs.email = "Email обов'язковий";
+    else if (!emailRegex.test(email)) errs.email = "Некоректний email";
+
+    if (birthdate) {
+      const d = new Date(birthdate);
+      const now = new Date();
+      if (isNaN(d.getTime())) errs.birthdate = "Некоректна дата";
+      else if (d > now) errs.birthdate = "Дата не може бути в майбутньому";
+    }
+
+    if (gender) {
+      if (!["male", "female", "other"].includes(gender)) errs.gender = "Некоректне значення";
+    }
+
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   // Загрузка аватара
@@ -71,7 +119,7 @@ export default function General() {
 
     // Проверка типа файла
     if (!file.type.startsWith("image/")) {
-      setError("Пожалуйста, выберите изображение");
+      setError("Будь ласка, виберіть зображення");
       return;
     }
 
@@ -89,9 +137,10 @@ export default function General() {
       formData.append("images", file);
 
       const response = await apiService.postFormData(Quries.API.UPLOAD.IMAGES, formData);
-      
+
       if (response.files && response.files.length > 0) {
-        const imageUrl = `http://localhost:4000/uploads/${response.files[0]}`;
+        const base = (api as any).defaults?.baseURL || window.location.origin;
+        const imageUrl = `${base}/uploads/${response.files[0]}`;
         // Обновляем только локальное состояние для превью; без глобального события
         setUserData((prev) => ({ ...prev, avatarUrl: imageUrl }));
         setSuccess("Аватар успешно загружен");
@@ -108,36 +157,21 @@ export default function General() {
   const handleSaveProfile = async () => {
     setError(null);
     setSuccess(null);
-    setSaving(true);
 
     try {
-      const firstName = (userData.firstName || "").trim();
-      const lastName = (userData.lastName || "").trim();
-      const login = (userData.login || "").trim();
-      const nameRegex = /^[a-zA-Zа-яА-ЯІіЇїЄєҐґ]+$/;
-
-      if (!firstName || !lastName) {
-        setError("Ім'я та прізвище обов'язкові");
+      // Проверяем поля перед сохранением
+      if (!validateFields()) {
+        setError("Виправте помилки у полях");
         setSaving(false);
         return;
       }
 
-      if (!nameRegex.test(firstName)) {
-        setError("Ім'я має містити лише літери");
-        setSaving(false);
-        return;
-      }
-
-      if (!nameRegex.test(lastName)) {
-        setError("Прізвище має містити лише літери");
-        setSaving(false);
-        return;
-      }
+      setSaving(true);
 
       const updateData = {
-        firstName,
-        lastName,
-        login,
+        firstName: (userData.firstName || "").trim(),
+        lastName: (userData.lastName || "").trim(),
+        login: (userData.login || "").trim(),
         email: userData.email,
         birthdate: userData.birthdate,
         gender: userData.gender,
@@ -272,6 +306,9 @@ export default function General() {
                 onChange={handleInputChange}
                 placeholder="Введіть ім'я"
               />
+              {fieldErrors.firstName && (
+                <p className="text-xs text-destructive mt-1">{fieldErrors.firstName}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -283,6 +320,9 @@ export default function General() {
                 onChange={handleInputChange}
                 placeholder="Введіть прізвище"
               />
+              {fieldErrors.lastName && (
+                <p className="text-xs text-destructive mt-1">{fieldErrors.lastName}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -294,6 +334,9 @@ export default function General() {
                 onChange={handleInputChange}
                 placeholder="Введіть логін"
               />
+              {fieldErrors.login && (
+                <p className="text-xs text-destructive mt-1">{fieldErrors.login}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -306,6 +349,9 @@ export default function General() {
                 onChange={handleInputChange}
                 placeholder="Введіть email"
               />
+              {fieldErrors.email && (
+                <p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -317,6 +363,9 @@ export default function General() {
                 value={userData.birthdate}
                 onChange={handleInputChange}
               />
+              {fieldErrors.birthdate && (
+                <p className="text-xs text-destructive mt-1">{fieldErrors.birthdate}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -333,6 +382,9 @@ export default function General() {
                 <option value="female">Женский</option>
                 <option value="other">Другой</option>
               </select>
+              {fieldErrors.gender && (
+                <p className="text-xs text-destructive mt-1">{fieldErrors.gender}</p>
+              )}
             </div>
           </div>
 
@@ -362,7 +414,7 @@ export default function General() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" onClick={() => navigate(Quries.CLIENT.PROFILE.SETTINGS + "/security")}>
+          <Button variant="outline" onClick={() => navigate(ROUTS.SETTINGS.SECURITY)}>
             Перейти до налаштувань безпеки
           </Button>
         </CardContent>

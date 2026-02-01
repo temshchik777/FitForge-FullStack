@@ -14,6 +14,9 @@ const {
   getUsersFilterParams,
   addUserToFollowers,
   deleteUserFromFollowers,
+  getWorkouts,
+  addWorkoutEntry,
+  deleteWorkoutEntry,
 } = require("../controllers/users");
 
 const {
@@ -64,6 +67,25 @@ router.get(
   "/saved",
   passport.authenticate("jwt", { session: false }),
   getSavedPosts,
+);
+
+// Workouts
+router.get(
+  "/workouts",
+  passport.authenticate("jwt", { session: false }),
+  getWorkouts,
+);
+
+router.post(
+  "/workouts",
+  passport.authenticate("jwt", { session: false }),
+  addWorkoutEntry,
+);
+
+router.delete(
+  "/workouts/:workoutId",
+  passport.authenticate("jwt", { session: false }),
+  deleteWorkoutEntry,
 );
 
 // @route   GET /api/users/:id
