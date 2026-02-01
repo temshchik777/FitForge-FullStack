@@ -322,7 +322,7 @@ export default function PostCard({
               <div className="mb-4 flex justify-center">
                 <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden max-w-lg">
                   {post.imageUrls.map((url, idx) => (
-                    <div key={idx} className="aspect-square bg-gray-100 group cursor-pointer" 
+                    <div key={idx} className="relative aspect-square bg-gray-100 group cursor-pointer" 
                          onClick={() => { setCurrentIndex(idx); setShowFullscreenModal(true); }}>
                       <img
                         src={url}
@@ -330,7 +330,7 @@ export default function PostCard({
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
                     </div>
                   ))}
                 </div>
