@@ -4,7 +4,6 @@ import { useLogout } from "@/hooks/use-logout";
 import {
   BadgeCheck,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
 } from "lucide-react";
 
