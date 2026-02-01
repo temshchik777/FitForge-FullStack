@@ -1,7 +1,7 @@
 import { apiService } from './api';
 import { Quries } from './quries';
 
-const BASE_URL = 'http://localhost:4000';
+const API_BASE = (import.meta as any)?.env?.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:4000';
 
 export const commentApi = {
   getCommentsByPost: async (postId: string) => {
@@ -11,7 +11,7 @@ export const commentApi = {
       return response.map((comment: any) => ({
         ...comment,
         user: comment.user && comment.user.avatarUrl && comment.user.avatarUrl.startsWith('/')
-          ? { ...comment.user, avatarUrl: `${BASE_URL}${comment.user.avatarUrl}` }
+          ? { ...comment.user, avatarUrl: `${API_BASE}${comment.user.avatarUrl}` }
           : comment.user,
       }));
     }
@@ -24,7 +24,7 @@ export const commentApi = {
     const response = await apiService.post(Quries.API.COMMENTS.CREATE, body);
 
     if (response && response.user && response.user.avatarUrl && response.user.avatarUrl.startsWith('/')) {
-      response.user.avatarUrl = `${BASE_URL}${response.user.avatarUrl}`;
+      response.user.avatarUrl = `${API_BASE}${response.user.avatarUrl}`;
     }
 
     return response;

@@ -6,7 +6,7 @@ import { Post } from '@/types/post';
 import { Card, CardContent } from '@/components/ui/card';
 import { Bookmark } from 'lucide-react';
 
-const BASE_URL = 'http://localhost:4000';
+const API_BASE = (import.meta as any)?.env?.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:4000';
 
 function getUserIdFromToken(): string | undefined {
   try {
@@ -37,7 +37,7 @@ export default function Saved() {
         ...post,
         imageUrls: post.imageUrls
           ? post.imageUrls.map((url: string) =>
-              url.startsWith('/') ? `${BASE_URL}${url}` : url,
+              url.startsWith('/') ? `${API_BASE}${url}` : url,
             )
           : [],
       }));
