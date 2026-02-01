@@ -111,14 +111,19 @@ app.use('/api/posts', posts);
 app.use('/api/comments', comments);
 app.use('/api/awards', awards);
 
-//  static assets if in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static('client/build'));
 
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
-  });
-}
+// //  static assets if in production
+// if (process.env.NODE_ENV === 'production') {
+//   app.use(express.static('client/build'));
+
+//   app.get('*', (req, res) => {
+//     res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
+//   });
+// }
+
+// У продакшні не роздаємо клієнтський білд із backend
+// Фронтенд деплоїться окремо Vercel тому цей блок закоментований
+
 
 // Обработка ошибок multer
 app.use((err, req, res, next) => {
