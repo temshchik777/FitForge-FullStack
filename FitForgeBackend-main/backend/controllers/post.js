@@ -19,20 +19,20 @@ async function checkAndGrantAwards(userId) {
     const allAwards = await Award.find({});
     const userAwardIds = user.awards.map(a => a._id.toString());
 
-    // Нагорода за перший пост (соответствует "First Badge" в seed) 
-    const firstPostAward = allAwards.find(a => a.title === "First Badge");
+    // Нагорода за перший пост
+    const firstPostAward = allAwards.find(a => a.title === "Перша Відзнака");
     if (firstPostAward && postCount >= 1 && !userAwardIds.includes(firstPostAward._id.toString())) {
       user.awards.push(firstPostAward._id);
     }
 
-    // Нагорода за 5 постів (соответствует "Strong Start" в seed)
-    const fivePostsAward = allAwards.find(a => a.title === "Strong Start");
+    // Нагорода за 5 постів
+    const fivePostsAward = allAwards.find(a => a.title === "Сильний Старт");
     if (fivePostsAward && postCount >= 5 && !userAwardIds.includes(fivePostsAward._id.toString())) {
       user.awards.push(fivePostsAward._id);
     }
 
-    // Нагорода за 10 постів (соответствует "Medalist" в seed)
-    const tenPostsAward = allAwards.find(a => a.title === "Medalist");
+    // Нагорода за 10 постів
+    const tenPostsAward = allAwards.find(a => a.title === "Медаліст");
     if (tenPostsAward && postCount >= 10 && !userAwardIds.includes(tenPostsAward._id.toString())) {
       user.awards.push(tenPostsAward._id);
     }

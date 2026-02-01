@@ -72,20 +72,18 @@ exports.deleteAward = (req, res, next) => {
 };
 
 exports.getAwards = (req, res, next) => {
-  const perPage = Number(req.query.perPage);
-  const startPage = Number(req.query.startPage);
-  const sort = req.query.sort;
-
+  console.log('[DEBUG] getAwards called');
   Award.find()
-    .skip(startPage * perPage - perPage)
-    .limit(perPage)
-    .sort(sort)
-    .then((awards) => res.send(awards))
-    .catch((err) =>
+    .then((awards) => {
+      console.log('[DEBUG] Found awards:', awards.length);
+      res.json(awards);
+    })
+    .catch((err) => {
+      console.error('[ERROR] getAwards failed:', err);
       res.status(400).json({
         message: `Error happened on : "${err}" `,
-      }),
-    );
+      });
+    });
 };
 
 exports.getAwardById = (req, res, next) => {

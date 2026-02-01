@@ -70,6 +70,76 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // DB Config
 const db = require('./config/keys').mongoURI;
+const Award = require('./models/Award');
+
+// Функция для инициализации наград
+async function initializeAwards() {
+  try {
+    const awardsCount = await Award.countDocuments();
+    if (awardsCount === 0) {
+      console.log('[INIT] No awards found. Creating default awards...');
+      const awards = [
+        {
+          title: "Перша Відзнака",
+          description: "Створив свій перший пост!",
+          type: "achievement",
+          threshold: 1,
+          icon: "Badge",
+          imageUrl: "../awardsImg/badge-svgrepo-com.svg",
+          content: "Нагорода за перший пост - Ви створили свій перший пост!",
+          color: "green"
+        },
+        {
+          title: "Сильний Старт",
+          description: "Створив 5 постів!",
+          type: "achievement",
+          threshold: 5,
+          icon: "FlexedBiceps",
+          imageUrl: "../awardsImg/flexed-biceps-medium-light-skin-tone-svgrepo-com.svg",
+          content: "Сильний старт - Ви створили 5 постів!",
+          color: "purple"
+        },
+        {
+          title: "Медаліст",
+          description: "Створив 10 постів!",
+          type: "achievement",
+          threshold: 10,
+          icon: "Medal",
+          imageUrl: "../awardsImg/medal-svgrepo-com.svg",
+          content: "Медаліст - Ви створили 10 постів!",
+          color: "gold"
+        },
+        {
+          title: "Улюбленець",
+          description: "Отримав 10 лайків на своїх постах!",
+          type: "likes",
+          threshold: 10,
+          icon: "AlarmClock",
+          imageUrl: "../awardsImg/alarm-clock-time-svgrepo-com.svg",
+          content: "Улюбленець - Ви отримали 10 лайків!",
+          color: "blue"
+        },
+        {
+          title: "Зірка",
+          description: "Отримав 50 лайків на своїх постах!",
+          type: "likes",
+          threshold: 50,
+          icon: "Fire",
+          imageUrl: "../awardsImg/fire-svgrepo-com.svg",
+          content: "Зірка - Ви отримали 50 лайків!",
+          color: "orange"
+        }
+      ];
+      
+      await Award.insertMany(awards);
+      console.log('[INIT] ✓ Successfully created 5 default awards');
+    } else {
+      console.log(`[INIT] ✓ Found ${awardsCount} awards in database`);
+    }
+  } catch (error) {
+    console.error('[INIT] Error initializing awards:', error.message);
+  }
+}
 
 // Connect to MongoDB with improved settings
 mongoose
@@ -83,10 +153,14 @@ mongoose
     retryWrites: true,
     retryReads: true
   })
-  .then(() => console.log('MongoDB Connected'))
+  .then(async () => {
+    console.log('MongoDB Connected');
+    // Инициализируем награды после успешного подключения
+    await initializeAwards();
+  })
   .catch((err) => {
     console.error('MongoDB connection error:', err);
-    // Не завершаем процесс: сервер продолжит работать без подключения к БД
+    // Не завершаємо процес: сервер продолжит работать без підключення до БД
   });
 
 // Обработка ошибок подключения после инициализации
