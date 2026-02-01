@@ -30,6 +30,8 @@ jobs:
           fi
       - name: Lint (frontend)
         run: npm run lint || true
+      - name: Test (frontend)
+        run: npm test -- --coverage --passWithNoTests
       - name: Build (frontend)
         run: npm run build
 
@@ -53,5 +55,7 @@ jobs:
           else
             npm install --no-audit --no-fund
           fi
+      - name: Test (backend)
+        run: npm test -- --passWithNoTests || true
       - name: Syntax check server.js (no run)
         run: node -e "new Function(require('fs').readFileSync('server.js','utf8')); console.log('Syntax OK')"
