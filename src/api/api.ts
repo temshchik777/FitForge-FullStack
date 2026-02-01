@@ -1,8 +1,11 @@
 import axios from 'axios';
 
 // Create axios instance with default config
-// Resolve base URL from env for production; fallback to local dev
-const API_BASE = (import.meta as any)?.env?.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:4000';
+// Resolve base URL: prefer env, but if running on Vercel and env is missing/localhost, use Render URL
+const envBase = (import.meta as any)?.env?.VITE_API_URL?.replace(/\/$/, '') || '';
+const isVercel = typeof window !== 'undefined' && /vercel\.app$/.test(window.location.hostname);
+const defaultBase = isVercel ? 'https://fitforge-fullstack.onrender.com' : 'http://localhost:4000';
+const API_BASE = (!envBase || /localhost/i.test(envBase)) ? defaultBase : envBase;
 export const api = axios.create({
   baseURL: API_BASE,
   timeout: 15000,

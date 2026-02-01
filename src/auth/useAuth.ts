@@ -3,7 +3,10 @@ import { useNavigate } from "react-router-dom";
 import {Quries} from "@/api/quries.ts";
 import { ROUTS } from "@/routes/routes.tsx";
 
-const BASE_API_URL = (import.meta as any)?.env?.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:4000'; // backend base URL from env or dev fallback
+const envBase = (import.meta as any)?.env?.VITE_API_URL?.replace(/\/$/, '') || '';
+const isVercel = typeof window !== 'undefined' && /vercel\.app$/.test(window.location.hostname);
+const defaultBase = isVercel ? 'https://fitforge-fullstack.onrender.com' : 'http://localhost:4000';
+const BASE_API_URL = (!envBase || /localhost/i.test(envBase)) ? defaultBase : envBase; // backend base URL
 
 export function useAuth() {
     const navigate = useNavigate();

@@ -3,7 +3,10 @@ import { Post, CreatePostRequest, PostsResponse, PostFilters } from '../types/po
 import { Quries } from './quries';
 
 // Базовый URL бэкенда: из переменной окружения, иначе dev-локалка
-const API_BASE = (import.meta as any)?.env?.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:4000';
+const envBase = (import.meta as any)?.env?.VITE_API_URL?.replace(/\/$/, '') || '';
+const isVercel = typeof window !== 'undefined' && /vercel\.app$/.test(window.location.hostname);
+const defaultBase = isVercel ? 'https://fitforge-fullstack.onrender.com' : 'http://localhost:4000';
+const API_BASE = (!envBase || /localhost/i.test(envBase)) ? defaultBase : envBase;
 
 export const postApi = {
     createPost: async (data: CreatePostRequest): Promise<{ message: string; post: Post }> => {
