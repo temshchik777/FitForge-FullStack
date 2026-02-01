@@ -1,8 +1,10 @@
 import axios from 'axios';
 
 // Create axios instance with default config
+// Resolve base URL from env for production; fallback to local dev
+const API_BASE = (import.meta as any)?.env?.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:4000';
 export const api = axios.create({
-  baseURL: 'http://localhost:4000', // Base URL from existing fetch calls
+  baseURL: API_BASE,
   timeout: 15000,
 });
 
